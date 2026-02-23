@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg-dark: #000000;
+    --color-bg-light: #FEFEFE;
+    --color-bg-subtle: #E8E6E5;
+    --color-text-light: #FEFEFE;
+    --color-text-dark: #000000;
+    --color-text-muted: #A1A09D;
+    --color-burgundy: #620E06;
+    --color-green: #425C59;
+    --color-amber: #D5CBBA;
+  }
+
+  * {
+    @apply box-border;
+  }
+
+  body {
+    @apply bg-zinc-950 text-white antialiased;
+    font-family: 'Red Hat Display', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Red Hat Display', sans-serif;
+  }
+}
+
+@layer components {
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-all duration-200 text-sm font-medium;
+  }
+
+  .sidebar-link.active {
+    @apply text-white bg-brand-burgundy/20 border border-brand-burgundy/40;
+  }
+
+  .card {
+    @apply bg-zinc-900 border border-zinc-800 rounded-xl p-6;
+  }
+
+  .card-hover {
+    @apply card hover:border-zinc-700 transition-all duration-200 cursor-pointer;
+  }
+
+  .btn-primary {
+    @apply bg-brand-burgundy hover:bg-brand-burgundy-light text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2 border border-zinc-700;
+  }
+
+  .btn-ghost {
+    @apply text-zinc-400 hover:text-white hover:bg-white/5 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2;
+  }
+
+  .input {
+    @apply bg-zinc-800 border border-zinc-700 text-white rounded-lg px-3 py-2 text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-brand-burgundy/50 focus:border-brand-burgundy/50 transition-all w-full;
+  }
+
+  .select {
+    @apply bg-zinc-800 border border-zinc-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-burgundy/50 w-full;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .skeleton {
+    @apply bg-zinc-800 animate-pulse rounded;
+  }
+
+  .stat-card {
+    @apply card flex flex-col gap-2;
+  }
+
+  .page-header {
+    @apply mb-8;
+  }
+
+  .page-title {
+    @apply text-2xl font-bold text-white;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.05em;
+  }
+
+  .page-subtitle {
+    @apply text-zinc-400 text-sm mt-1;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #18181b;
+}
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  @apply fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+}
+
+.modal-content {
+  @apply bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto;
+}
+
+/* Recharts custom */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: #27272a;
+}
+
+.recharts-text {
+  fill: #71717a;
+  font-size: 12px;
+}
