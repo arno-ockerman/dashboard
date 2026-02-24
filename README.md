@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Make It Happen Dashboard 🚀
 
-## Getting Started
+A production-ready business dashboard for Herbalife distribution, built with Next.js 14, Supabase, and Tailwind CSS.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **📊 Command Center** - Revenue, follow-ups, habits, goals overview
+- **👥 CRM** - Client pipeline, interaction history, follow-up reminders  
+- **💰 Sales Tracker** - Revenue charts, product breakdown, monthly tracking
+- **📚 Knowledge Base** - Save URLs, YouTube videos, articles with auto-metadata
+- **🎯 Goals & Habits** - Progress bars, streak tracking, daily habits
+- **📅 Content Planner** - Weekly calendar, platform badges, status workflow
+
+## Tech Stack
+
+- **Framework:** Next.js 14 (App Router)
+- **Database:** Supabase (PostgreSQL)
+- **Styling:** Tailwind CSS with Make It Happen brand
+- **Charts:** Recharts
+- **Icons:** Lucide React
+- **Deployment:** Vercel
+
+## Setup
+
+### 1. Database Setup
+
+Run the SQL in `src/lib/schema.sql` in your Supabase SQL Editor:
+- Go to: https://supabase.com/dashboard/project/uldlxqyqmpjznmnokbjz/sql/new
+
+Or visit `/setup` on the live site for a guided setup.
+
+### 2. Environment Variables
+
+Copy `.env.local.example` to `.env.local` and fill in your Supabase credentials:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key  
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Run locally
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Brand Colors
 
-## Learn More
+- Burgundy: `#620E06`
+- Green: `#425C59`
+- Amber: `#D5CBBA`
+- Platinum: `#E8E6E5`
 
-To learn more about Next.js, take a look at the following resources:
+## Live
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Production:** https://dashboard-orpin-ten-16.vercel.app
+- **GitHub:** https://github.com/arno-ockerman/dashboard
