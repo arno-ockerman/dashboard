@@ -108,3 +108,24 @@ CREATE TABLE IF NOT EXISTS content (
 -- ALTER TABLE habit_logs ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE knowledge ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE content ENABLE ROW LEVEL SECURITY;
+
+-- Daily Focus (Big 3 Feature)
+-- Run this migration via Supabase dashboard SQL Editor or your migration tool
+CREATE TABLE IF NOT EXISTS daily_focus (
+  id uuid default gen_random_uuid() primary key,
+  user_id text not null default 'arno',
+  date date not null default current_date,
+  task_1 text,
+  task_1_done boolean default false,
+  task_2 text,
+  task_2_done boolean default false,
+  task_3 text,
+  task_3_done boolean default false,
+  reflection text,
+  energy_level int check (energy_level between 1 and 5),
+  focus_score int check (focus_score between 1 and 5),
+  pomodoros_completed int default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(user_id, date)
+);

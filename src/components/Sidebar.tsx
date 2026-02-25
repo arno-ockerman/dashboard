@@ -14,10 +14,12 @@ import {
   X,
   TrendingUp,
   Zap,
+  Crosshair,
 } from 'lucide-react'
 
 const navLinks = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/focus', label: 'Big 3 Focus', icon: Crosshair },
   { href: '/clients', label: 'Clients', icon: Users },
   { href: '/sales', label: 'Sales', icon: DollarSign },
   { href: '/knowledge', label: 'Knowledge', icon: BookOpen },

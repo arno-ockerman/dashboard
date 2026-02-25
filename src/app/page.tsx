@@ -5,10 +5,96 @@ import Link from 'next/link'
 import {
   DollarSign, Users, Bell, TrendingUp, Plus, ArrowRight,
   CheckCircle2, Circle, Flame, Target, Calendar, BookOpen,
-  RefreshCw, UserPlus, Zap,
+  RefreshCw, UserPlus, Zap, Crosshair,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import type { Client, Goal, Habit, Sale } from '@/types'
+
+// ─── Big 3 Widget types ───────────────────────────────────────────────────────
+interface FocusData {
+  task_1: string | null
+  task_1_done: boolean
+  task_2: string | null
+  task_2_done: boolean
+  task_3: string | null
+  task_3_done: boolean
+}
+
+function Big3Widget() {
+  const [focus, setFocus] = useState<FocusData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const today = format(new Date(), 'yyyy-MM-dd')
+    fetch(`/api/focus?date=${today}`)
+      .then((r) => r.json())
+      .then((d) => setFocus(d.focus || null))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const tasks = focus
+    ? [
+        { text: focus.task_1, done: focus.task_1_done },
+        { text: focus.task_2, done: focus.task_2_done },
+        { text: focus.task_3, done: focus.task_3_done },
+      ].filter((t) => t.text)
+    : []
+
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-semibold text-white flex items-center gap-2">
+          <Crosshair className="w-4 h-4 text-brand-burgundy" />
+          Today&apos;s Big 3
+        </h2>
+        <Link
+          href="/focus"
+          className="text-xs text-zinc-500 hover:text-white flex items-center gap-1"
+        >
+          Focus page <ArrowRight className="w-3 h-3" />
+        </Link>
+      </div>
+      {loading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => <div key={i} className="skeleton h-8 rounded-lg" />)}
+        </div>
+      ) : tasks.length === 0 ? (
+        <div className="text-center py-6">
+          <p className="text-zinc-500 text-sm mb-3">No tasks set for today</p>
+          <Link href="/focus" className="btn-primary mx-auto text-xs">
+            <Crosshair className="w-3 h-3" /> Set Your Big 3
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {tasks.map((t, i) => (
+            <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
+              {t.done ? (
+                <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
+              ) : (
+                <Circle className="w-5 h-5 text-zinc-600 flex-shrink-0" />
+              )}
+              <span className={`text-sm flex-1 ${t.done ? 'text-zinc-500 line-through' : 'text-white'}`}>
+                {t.text}
+              </span>
+            </div>
+          ))}
+          <div className="mt-3 pt-3 border-t border-zinc-800">
+            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-brand-burgundy rounded-full transition-all duration-500"
+                style={{ width: `${tasks.length ? (tasks.filter((t) => t.done).length / tasks.length) * 100 : 0}%` }}
+              />
+            </div>
+            <p className="text-xs text-zinc-500 mt-1">
+              {tasks.filter((t) => t.done).length}/{tasks.length} completed
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface DashboardData {
   revenue_this_month: number
@@ -186,6 +272,11 @@ export default function DashboardPage() {
               />
             </div>
             <p className="text-xs text-zinc-500 mt-2">{data?.sales_this_month || 0} sales logged this month</p>
+          </div>
+
+          {/* Big 3 Widget */}
+          <div className="mb-6">
+            <Big3Widget />
           </div>
 
           <div className="grid lg:grid-cols-2 gap-6 mb-6">
