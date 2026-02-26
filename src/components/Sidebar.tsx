@@ -15,16 +15,44 @@ import {
   TrendingUp,
   Zap,
   Crosshair,
+  ListTodo,
+  Folder,
+  FileText,
+  Settings,
+  Bot,
 } from 'lucide-react'
 
-const navLinks = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/focus', label: 'Big 3 Focus', icon: Crosshair },
-  { href: '/clients', label: 'Clients', icon: Users },
-  { href: '/sales', label: 'Sales', icon: DollarSign },
-  { href: '/knowledge', label: 'Knowledge', icon: BookOpen },
-  { href: '/goals', label: 'Goals & Habits', icon: Target },
-  { href: '/content', label: 'Content', icon: Calendar },
+const NAV_SECTIONS = [
+  {
+    label: 'Workspace',
+    links: [
+      { href: '/', label: 'Command Center', icon: LayoutDashboard },
+      { href: '/focus', label: 'Big 3 Focus', icon: Crosshair },
+    ],
+  },
+  {
+    label: 'AI Team',
+    links: [
+      { href: '/team', label: 'Team', icon: Bot },
+      { href: '/tasks', label: 'Task Board', icon: ListTodo },
+      { href: '/projects', label: 'Projects', icon: Folder },
+    ],
+  },
+  {
+    label: 'Business',
+    links: [
+      { href: '/clients', label: 'Clients', icon: Users },
+      { href: '/sales', label: 'Sales', icon: DollarSign },
+      { href: '/content', label: 'Content', icon: Calendar },
+      { href: '/goals', label: 'Goals & Habits', icon: Target },
+    ],
+  },
+  {
+    label: 'Knowledge',
+    links: [
+      { href: '/knowledge', label: 'Knowledge Base', icon: BookOpen },
+    ],
+  },
 ]
 
 export default function Sidebar() {
@@ -52,31 +80,37 @@ export default function Sidebar() {
       </div>
 
       {/* Nav links */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        <p className="text-zinc-600 text-xs font-semibold uppercase tracking-widest px-4 mb-3">
-          Navigation
-        </p>
-        {navLinks.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href || (href !== '/' && pathname.startsWith(href))
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? 'text-white bg-brand-burgundy/20 border border-brand-burgundy/40'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-brand-burgundy' : ''}`} />
-              {label}
-              {isActive && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-burgundy" />
-              )}
-            </Link>
-          )
-        })}
+      <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.label}>
+            <p className="text-zinc-600 text-xs font-semibold uppercase tracking-widest px-4 mb-2">
+              {section.label}
+            </p>
+            <div className="space-y-1">
+              {section.links.map(({ href, label, icon: Icon }) => {
+                const isActive = pathname === href || (href !== '/' && pathname.startsWith(href))
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      isActive
+                        ? 'text-white bg-brand-burgundy/20 border border-brand-burgundy/40'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-brand-burgundy' : ''}`} />
+                    {label}
+                    {isActive && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-burgundy" />
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Bottom brand */}
@@ -85,7 +119,7 @@ export default function Sidebar() {
           <TrendingUp className="w-4 h-4 text-brand-amber flex-shrink-0" />
           <div>
             <div className="text-white text-xs font-semibold">Arno Ockerman</div>
-            <div className="text-zinc-500 text-xs">Herbalife Distributor</div>
+            <div className="text-zinc-500 text-xs">Make It Happen</div>
           </div>
         </div>
       </div>

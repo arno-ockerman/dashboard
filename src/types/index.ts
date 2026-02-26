@@ -108,3 +108,54 @@ export interface DashboardStats {
   sales_this_month: number
   new_leads_this_week: number
 }
+
+// ─── Team & Agent Types ───────────────────────────────────────────────────────
+
+export type AgentStatus = 'active' | 'idle' | 'busy' | 'offline'
+export type ActionType = 'commit' | 'pr' | 'deploy' | 'task_complete' | 'message'
+export type TaskPriority = 'high' | 'medium' | 'low'
+export type TaskStatus = 'todo' | 'in_progress' | 'done'
+export type ProjectStatus = 'active' | 'paused' | 'completed' | 'planning'
+
+export interface Agent {
+  name: string
+  emoji: string
+  role: string
+  model: string
+  status: AgentStatus
+  currentTask?: string
+  color: string
+}
+
+export interface TeamActivity {
+  id: string
+  agent_name: string
+  action_type: ActionType
+  description?: string
+  metadata: Record<string, unknown>
+  created_at: string
+}
+
+export interface Task {
+  id: string
+  title: string
+  description?: string
+  assigned_to?: string
+  priority: TaskPriority
+  status: TaskStatus
+  project?: string
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Project {
+  id: string
+  name: string
+  description?: string
+  status: ProjectStatus
+  github_repo?: string
+  vercel_url?: string
+  last_update: string
+  metadata: Record<string, unknown>
+}
