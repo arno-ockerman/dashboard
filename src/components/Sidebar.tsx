@@ -20,6 +20,7 @@ import {
   FileText,
   Settings,
   Bot,
+  Upload,
 } from 'lucide-react'
 
 const NAV_SECTIONS = [
@@ -51,6 +52,12 @@ const NAV_SECTIONS = [
     links: [
       { href: '/knowledge', label: 'Knowledge Base', icon: BookOpen },
       { href: '/files', label: 'Files', icon: FolderOpen },
+    ],
+  },
+  {
+    label: 'Systeem',
+    links: [
+      { href: '/settings', label: 'Instellingen', icon: Settings },
     ],
   },
 ]

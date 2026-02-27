@@ -109,6 +109,39 @@ CREATE TABLE IF NOT EXISTS content (
 -- ALTER TABLE knowledge ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE content ENABLE ROW LEVEL SECURITY;
 
+-- Phase 2 — Content Posts (new table with richer schema)
+CREATE TABLE IF NOT EXISTS content_posts (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  title text NOT NULL,
+  caption text,
+  platform text DEFAULT 'instagram' CHECK (platform IN ('instagram', 'facebook', 'tiktok', 'linkedin')),
+  post_type text DEFAULT 'post' CHECK (post_type IN ('reel', 'carousel', 'story', 'post', 'live')),
+  media_url text,
+  scheduled_date date,
+  status text DEFAULT 'idea' CHECK (status IN ('idea', 'draft', 'scheduled', 'published')),
+  assigned_to text DEFAULT 'kate',
+  tags text[],
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Phase 2 — Dashboard Settings (key-value config store)
+CREATE TABLE IF NOT EXISTS dashboard_settings (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  key text UNIQUE NOT NULL,
+  value jsonb,
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Phase 2 — Extend clients table
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS phone text;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS tags text[] DEFAULT '{}';
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS source text DEFAULT 'manual';
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS notes text;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS last_contact timestamptz;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS bizworks_id text;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS imported_at timestamptz;
+
 -- Daily Focus (Big 3 Feature)
 -- Run this migration via Supabase dashboard SQL Editor or your migration tool
 CREATE TABLE IF NOT EXISTS daily_focus (
