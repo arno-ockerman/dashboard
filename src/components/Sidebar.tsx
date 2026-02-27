@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   Users,
-  DollarSign,
   BookOpen,
   Target,
   Calendar,
@@ -17,6 +16,7 @@ import {
   Crosshair,
   ListTodo,
   Folder,
+  FolderOpen,
   FileText,
   Settings,
   Bot,
@@ -42,7 +42,6 @@ const NAV_SECTIONS = [
     label: 'Business',
     links: [
       { href: '/clients', label: 'Clients', icon: Users },
-      { href: '/sales', label: 'Sales', icon: DollarSign },
       { href: '/content', label: 'Content', icon: Calendar },
       { href: '/goals', label: 'Goals & Habits', icon: Target },
     ],
@@ -51,6 +50,7 @@ const NAV_SECTIONS = [
     label: 'Knowledge',
     links: [
       { href: '/knowledge', label: 'Knowledge Base', icon: BookOpen },
+      { href: '/files', label: 'Files', icon: FolderOpen },
     ],
   },
 ]
