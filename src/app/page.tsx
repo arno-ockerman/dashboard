@@ -6,6 +6,7 @@ import {
   DollarSign, Users, Bell, TrendingUp, Plus, ArrowRight,
   CheckCircle2, Circle, Flame, Target, Calendar, BookOpen,
   RefreshCw, UserPlus, Zap, Crosshair, Bot, ListTodo, Folder, Clock,
+  Settings,
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import type { Client, Goal, Habit, Sale, Task, Project, TeamActivity } from '@/types'
@@ -273,6 +274,90 @@ function ProjectStatusWidget() {
               <span className={`text-xs font-medium capitalize ${statusColors[project.status] || 'text-zinc-400'}`}>
                 {project.status}
               </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Upcoming Content Widget ──────────────────────────────────────────────────
+
+interface ContentPost {
+  id: string
+  title: string
+  platform: string
+  post_type: string
+  status: string
+  scheduled_date: string | null
+}
+
+const PLATFORM_ICONS: Record<string, string> = {
+  instagram: '📸',
+  facebook: '👥',
+  tiktok: '🎵',
+  linkedin: '💼',
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  idea: 'text-zinc-400',
+  draft: 'text-amber-400',
+  scheduled: 'text-blue-400',
+  published: 'text-emerald-400',
+}
+
+function UpcomingContentWidget() {
+  const [posts, setPosts] = useState<ContentPost[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const today = format(new Date(), 'yyyy-MM-dd')
+    const future = format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
+    fetch(`/api/content-posts?week_start=${today}&week_end=${future}&limit=3`)
+      .then((r) => r.json())
+      .then((d) => setPosts(Array.isArray(d) ? d.slice(0, 3) : []))
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
+
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-semibold text-white flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-brand-amber" />
+          Aankomende Content
+        </h2>
+        <Link href="/content" className="text-xs text-zinc-500 hover:text-white flex items-center gap-1">
+          Content planner <ArrowRight className="w-3 h-3" />
+        </Link>
+      </div>
+      {loading ? (
+        <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-10 rounded-lg" />)}</div>
+      ) : posts.length === 0 ? (
+        <div className="text-center py-6">
+          <p className="text-zinc-500 text-sm mb-3">Geen content gepland</p>
+          <Link href="/content?modal=add" className="btn-primary mx-auto text-xs">
+            <Plus className="w-3 h-3" /> Content Plannen
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {posts.map((post) => (
+            <div key={post.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-zinc-800/50">
+              <span className="text-lg flex-shrink-0">{PLATFORM_ICONS[post.platform] || '📱'}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-white truncate">{post.title}</p>
+                <p className="text-xs text-zinc-500">{post.post_type}</p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className={`text-xs font-medium ${STATUS_COLORS[post.status] || 'text-zinc-400'}`}>
+                  {post.status === 'scheduled' ? 'Gepland' : post.status === 'draft' ? 'Concept' : post.status === 'published' ? '✓' : 'Idee'}
+                </p>
+                {post.scheduled_date && (
+                  <p className="text-xs text-zinc-600">{format(new Date(post.scheduled_date), 'dd MMM')}</p>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -560,6 +645,11 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Goals + Recent Clients + Upcoming Content */}
+          <div className="grid lg:grid-cols-3 gap-6 mb-6">
+            <UpcomingContentWidget />
+          </div>
+
           {/* Goals + Recent Activity */}
           <div className="grid lg:grid-cols-2 gap-6 mb-6">
             {/* Goals */}
@@ -660,7 +750,7 @@ export default function DashboardPage() {
               <Zap className="w-4 h-4 text-brand-amber" />
               Quick Actions
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
               <Link href="/team" className="flex flex-col items-center gap-2 p-4 rounded-xl bg-brand-burgundy/10 hover:bg-brand-burgundy/20 transition-colors text-center border border-brand-burgundy/30">
                 <Bot className="w-6 h-6 text-brand-burgundy" />
                 <span className="text-xs text-zinc-300">AI Team</span>
@@ -688,6 +778,10 @@ export default function DashboardPage() {
               <Link href="/content?modal=add" className="flex flex-col items-center gap-2 p-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-center">
                 <Calendar className="w-6 h-6 text-brand-amber" />
                 <span className="text-xs text-zinc-300">Plan Content</span>
+              </Link>
+              <Link href="/settings" className="flex flex-col items-center gap-2 p-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-center">
+                <Settings className="w-6 h-6 text-zinc-400" />
+                <span className="text-xs text-zinc-300">Instellingen</span>
               </Link>
             </div>
           </div>
