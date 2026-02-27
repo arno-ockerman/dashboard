@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     if (recent === 'true') {
       const mdFiles: { name: string; path: string; isDir: boolean; size: number; modified: string }[] = []
       
-      function scanForMd(dirPath: string, relPath: string, depth: number) {
+      const scanForMd = (dirPath: string, relPath: string, depth: number): void => {
         if (depth > 4) return
         try {
           const entries = fs.readdirSync(dirPath, { withFileTypes: true })
