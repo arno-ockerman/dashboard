@@ -306,6 +306,84 @@ function ExportCard() {
   )
 }
 
+// ─── Phase 2 Migration Card ───────────────────────────────────────────────────
+
+function MigrationCard() {
+  const [status, setStatus] = useState<Record<string, string> | null>(null)
+  const [running, setRunning] = useState(false)
+  const [result, setResult] = useState<string | null>(null)
+
+  const checkStatus = async () => {
+    try {
+      const res = await fetch('/api/setup/phase2')
+      const data = await res.json()
+      setStatus(data)
+    } catch { /* ignore */ }
+  }
+
+  const runMigration = async () => {
+    setRunning(true)
+    setResult(null)
+    try {
+      const res = await fetch('/api/setup/phase2', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        setResult('✅ Migratie geslaagd!')
+        checkStatus()
+      } else {
+        setResult(data.message || 'Gebruik de Supabase SQL Editor link hieronder.')
+      }
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  useEffect(() => { checkStatus() }, [])
+
+  return (
+    <div className="card">
+      <h2 className="font-semibold text-white flex items-center gap-2 mb-4">
+        <Database className="w-4 h-4 text-purple-400" />
+        Database Migratie
+      </h2>
+      {status && (
+        <div className="space-y-2 mb-4">
+          {['content_posts', 'dashboard_settings'].map((tbl) => (
+            <div key={tbl} className="flex items-center justify-between p-2 bg-zinc-800/50 rounded-lg">
+              <span className="text-xs font-mono text-zinc-400">{tbl}</span>
+              <span className={`text-xs font-medium ${status[tbl] === 'exists' ? 'text-emerald-400' : 'text-red-400'}`}>
+                {status[tbl] === 'exists' ? '✓ Aanwezig' : '✗ Ontbreekt'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      {result && (
+        <div className="p-3 bg-zinc-800/50 rounded-lg mb-3 text-xs text-zinc-300">
+          {result}
+        </div>
+      )}
+      <div className="flex gap-2 flex-col">
+        <button
+          onClick={runMigration}
+          disabled={running}
+          className="btn-primary justify-center w-full text-sm"
+        >
+          {running ? <><RefreshCw className="w-4 h-4 animate-spin" /> Migreren...</> : 'Fase 2 Migratie Uitvoeren'}
+        </button>
+        <a
+          href="https://supabase.com/dashboard/project/uldlxqyqmpjznmnokbjz/sql/new"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-ghost justify-center w-full text-xs"
+        >
+          <ExternalLink className="w-3 h-3" /> Handmatig via Supabase SQL Editor
+        </a>
+      </div>
+    </div>
+  )
+}
+
 // ─── Dashboard Info Card ──────────────────────────────────────────────────────
 
 function DashboardInfoCard() {
@@ -374,6 +452,7 @@ export default function SettingsPage() {
         {/* Left column */}
         <div className="space-y-6">
           <SupabaseStatusCard />
+          <MigrationCard />
           <TeamModelsCard />
           <DashboardInfoCard />
         </div>
