@@ -369,6 +369,7 @@ function UpcomingContentWidget() {
 function SalesWidget() {
   const [stats, setStats] = useState<SalesStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/sales/stats')
@@ -379,7 +380,9 @@ function SalesWidget() {
         }
         setStats(data)
       })
-      .catch(console.error)
+      .catch((e) => {
+        setError(e instanceof Error ? e.message : 'Failed to load sales stats')
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -403,6 +406,11 @@ function SalesWidget() {
         <div className="space-y-3">
           <div className="skeleton h-10 rounded-lg" />
           <div className="skeleton h-20 rounded-lg" />
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-800/40 p-4">
+          <p className="text-sm text-zinc-300">No sales data yet</p>
+          <p className="mt-1 text-xs text-zinc-500">{error}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -492,6 +500,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [togglingHabit, setTogglingHabit] = useState<string | null>(null)
+  const [todayLabel, setTodayLabel] = useState<string>('')
 
   const fetchData = async () => {
     setLoading(true)
@@ -506,7 +515,13 @@ export default function DashboardPage() {
     }
   }
 
-  useEffect(() => { fetchData() }, [])
+  useEffect(() => {
+    fetchData()
+    const update = () => setTodayLabel(format(new Date(), 'EEEE, MMMM d, yyyy'))
+    update()
+    const id = setInterval(update, 60_000)
+    return () => clearInterval(id)
+  }, [])
 
   const toggleHabit = async (habitId: string, completed: boolean) => {
     setTogglingHabit(habitId)
@@ -537,8 +552,8 @@ export default function DashboardPage() {
           >
             Command Center
           </h1>
-          <p className="text-zinc-400 text-sm mt-1">
-            {format(new Date(), 'EEEE, MMMM d, yyyy')} — Make It Happen
+          <p className="text-zinc-400 text-sm mt-1" suppressHydrationWarning>
+            {(todayLabel || format(new Date(), 'EEEE, MMMM d, yyyy'))} — Make It Happen
           </p>
         </div>
         <button

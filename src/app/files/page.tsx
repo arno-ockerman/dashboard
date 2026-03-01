@@ -340,7 +340,7 @@ const markdownComponents = {
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
-export default function FilesPage() {
+function LegacyFilesPage() {
   const [tree, setTree] = useState<TreeNode[]>([])
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [fileContent, setFileContent] = useState<string>('')
@@ -736,6 +736,22 @@ export default function FilesPage() {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+export default function FilesPage() {
+  return (
+    <div className="card">
+      <h1
+        className="text-3xl text-white tracking-widest uppercase"
+        style={{ fontFamily: "'Bebas Neue', sans-serif" }}
+      >
+        Files
+      </h1>
+      <p className="text-zinc-400 text-sm mt-2">
+        Files viewer coming soon — use Telegram to request files from Jarvis.
+      </p>
     </div>
   )
 }

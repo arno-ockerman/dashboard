@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { addMonths, format } from 'date-fns'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { formatSupabaseError, isMissingTableError } from '@/lib/supabase-error'
 import type { ProductCategory, SalesCategoryBreakdown, SalesStats } from '@/types'
 
 const CATEGORY_VALUES: ProductCategory[] = [
@@ -26,6 +27,17 @@ export async function GET() {
       .select('amount, product_category, date')
 
     if (error) {
+      if (isMissingTableError(error)) {
+        const empty: SalesStats = {
+          this_month: 0,
+          last_month: 0,
+          growth_pct: 0,
+          total_sales: 0,
+          avg_sale: 0,
+          by_category: [],
+        }
+        return NextResponse.json(empty)
+      }
       throw error
     }
 
@@ -88,6 +100,6 @@ export async function GET() {
 
     return NextResponse.json(stats)
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    return NextResponse.json({ error: formatSupabaseError(error) }, { status: 500 })
   }
 }

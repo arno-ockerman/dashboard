@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { addMonths, format, parse } from 'date-fns'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { formatSupabaseError, isMissingTableError } from '@/lib/supabase-error'
 import type { ProductCategory } from '@/types'
 
 const CATEGORY_VALUES: ProductCategory[] = [
@@ -59,12 +60,15 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query
 
     if (error) {
+      if (isMissingTableError(error)) {
+        return NextResponse.json([])
+      }
       throw error
     }
 
     return NextResponse.json(data || [])
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    return NextResponse.json({ error: formatSupabaseError(error) }, { status: 500 })
   }
 }
 
@@ -96,11 +100,17 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
+      if (isMissingTableError(error)) {
+        return NextResponse.json(
+          { error: 'Sales table missing. Run Supabase migrations (supabase/migrations/20260301_sales.sql).' },
+          { status: 503 }
+        )
+      }
       throw error
     }
 
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    return NextResponse.json({ error: formatSupabaseError(error) }, { status: 500 })
   }
 }
