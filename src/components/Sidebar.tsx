@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
+  DollarSign,
   Users,
   BookOpen,
   Target,
@@ -43,6 +44,7 @@ const NAV_SECTIONS = [
   {
     label: 'Business',
     links: [
+      { href: '/sales', label: 'Sales', icon: DollarSign },
       { href: '/clients', label: 'Clients', icon: Users },
       { href: '/content', label: 'Content', icon: Calendar },
       { href: '/goals', label: 'Goals & Habits', icon: Target },

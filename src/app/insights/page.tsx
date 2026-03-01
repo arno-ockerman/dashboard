@@ -187,7 +187,7 @@ function RecommendationCard({
   onUpdate,
 }: {
   rec: BiRecommendation
-  onUpdate: (id: string, update: { status: string; feedback?: string }) => void
+  onUpdate: (id: string, update: { status: BiRecommendation['status']; feedback?: string }) => void
 }) {
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedbackText, setFeedbackText] = useState(rec.feedback ?? '')
@@ -195,7 +195,7 @@ function RecommendationCard({
 
   const domainConfig = DOMAIN_CONFIG[rec.domain] ?? DOMAIN_CONFIG.Strategy
 
-  const handleAction = async (status: string, feedback?: string) => {
+  const handleAction = async (status: BiRecommendation['status'], feedback?: string) => {
     setSaving(true)
     await onUpdate(rec.id, { status, feedback })
     setSaving(false)
@@ -597,7 +597,7 @@ export default function InsightsPage() {
     }
   }
 
-  const handleUpdateRec = async (id: string, update: { status: string; feedback?: string }) => {
+  const handleUpdateRec = async (id: string, update: { status: BiRecommendation['status']; feedback?: string }) => {
     const res = await fetch(`/api/bi/recommendations/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

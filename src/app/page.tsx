@@ -6,10 +6,10 @@ import {
   DollarSign, Users, Bell, TrendingUp, Plus, ArrowRight,
   CheckCircle2, Circle, Flame, Target, Calendar, BookOpen,
   RefreshCw, UserPlus, Zap, Crosshair, Bot, ListTodo, Folder, Clock,
-  Settings,
+  Settings, TrendingDown,
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
-import type { Client, Goal, Habit, Sale, Task, Project, TeamActivity } from '@/types'
+import type { Client, Goal, Habit, Sale, SalesStats, Task, Project, TeamActivity } from '@/types'
 
 // ─── Big 3 Widget types ───────────────────────────────────────────────────────
 interface FocusData {
@@ -366,6 +366,73 @@ function UpcomingContentWidget() {
   )
 }
 
+function SalesWidget() {
+  const [stats, setStats] = useState<SalesStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/sales/stats')
+      .then(async (response) => {
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load sales stats')
+        }
+        setStats(data)
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
+
+  const growth = stats?.growth_pct || 0
+  const positive = growth >= 0
+  const TrendIcon = positive ? TrendingUp : TrendingDown
+
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-semibold text-white flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-brand-burgundy" />
+          Sales Snapshot
+        </h2>
+        <Link href="/sales" className="text-xs text-zinc-500 hover:text-white flex items-center gap-1">
+          Sales page <ArrowRight className="w-3 h-3" />
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="space-y-3">
+          <div className="skeleton h-10 rounded-lg" />
+          <div className="skeleton h-20 rounded-lg" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-brand-burgundy/30 bg-gradient-to-br from-brand-burgundy/10 to-zinc-900 p-4">
+            <p className="text-xs uppercase tracking-widest text-zinc-500">This Month</p>
+            <p className="mt-2 text-3xl font-bold text-white">€{(stats?.this_month || 0).toFixed(2)}</p>
+            <div className={`mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+              positive ? 'bg-brand-green/20 text-emerald-300' : 'bg-red-500/10 text-red-300'
+            }`}>
+              <TrendIcon className="w-3 h-3" />
+              {growth.toFixed(1)}% vs last month
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-800/50 p-3">
+              <p className="text-xs uppercase tracking-widest text-zinc-500">Sales</p>
+              <p className="mt-2 text-xl font-semibold text-white">{stats?.total_sales || 0}</p>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-800/50 p-3">
+              <p className="text-xs uppercase tracking-widest text-zinc-500">Avg Sale</p>
+              <p className="mt-2 text-xl font-semibold text-white">€{(stats?.avg_sale || 0).toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Dashboard Data Types ─────────────────────────────────────────────────────
 
 interface DashboardData {
@@ -645,8 +712,9 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Goals + Recent Clients + Upcoming Content */}
-          <div className="grid lg:grid-cols-3 gap-6 mb-6">
+          {/* Sales + Content */}
+          <div className="grid lg:grid-cols-2 gap-6 mb-6">
+            <SalesWidget />
             <UpcomingContentWidget />
           </div>
 
@@ -767,7 +835,7 @@ export default function DashboardPage() {
                 <UserPlus className="w-6 h-6 text-brand-green" />
                 <span className="text-xs text-zinc-300">Add Client</span>
               </Link>
-              <Link href="/sales?modal=add" className="flex flex-col items-center gap-2 p-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-center">
+              <Link href="/sales" className="flex flex-col items-center gap-2 p-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-center">
                 <DollarSign className="w-6 h-6 text-brand-burgundy" />
                 <span className="text-xs text-zinc-300">Log Sale</span>
               </Link>
