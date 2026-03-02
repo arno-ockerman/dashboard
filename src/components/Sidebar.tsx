@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
+  DollarSign,
   Users,
   BookOpen,
   Target,
@@ -21,6 +22,7 @@ import {
   Settings,
   Bot,
   Upload,
+  Lightbulb,
 } from 'lucide-react'
 
 const NAV_SECTIONS = [
@@ -42,9 +44,11 @@ const NAV_SECTIONS = [
   {
     label: 'Business',
     links: [
+      { href: '/sales', label: 'Sales', icon: DollarSign },
       { href: '/clients', label: 'Clients', icon: Users },
       { href: '/content', label: 'Content', icon: Calendar },
       { href: '/goals', label: 'Goals & Habits', icon: Target },
+      { href: '/insights', label: 'BI Council', icon: Lightbulb },
     ],
   },
   {
