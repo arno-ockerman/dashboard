@@ -22,11 +22,11 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-zinc-950 text-white font-red-hat">
+      <body className="bg-zinc-950 text-white font-red-hat overflow-x-hidden">
         <div className="flex h-screen overflow-hidden">
           <Sidebar />
-          <main className="flex-1 overflow-y-auto bg-zinc-950">
-            <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+          <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-zinc-950">
+            <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-7xl mx-auto">
               {children}
             </div>
           </main>

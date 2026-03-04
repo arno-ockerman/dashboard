@@ -617,12 +617,12 @@ export default function DashboardPage() {
                       key={habit.id}
                       onClick={() => toggleHabit(habit.id, habit.completed_today ?? false)}
                       disabled={togglingHabit === habit.id}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800 transition-colors text-left"
+                      className="w-full flex items-center gap-3 p-3 min-h-[52px] rounded-xl hover:bg-zinc-800 transition-colors text-left active:scale-[0.99] touch-manipulation"
                     >
                       {habit.completed_today ? (
-                        <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
+                        <CheckCircle2 className="w-6 h-6 text-brand-green flex-shrink-0" />
                       ) : (
-                        <Circle className="w-5 h-5 text-zinc-600 flex-shrink-0" />
+                        <Circle className="w-6 h-6 text-zinc-600 flex-shrink-0" />
                       )}
                       <span className={`text-sm flex-1 ${habit.completed_today ? 'text-zinc-400 line-through' : 'text-white'}`}>
                         {habit.icon} {habit.title}

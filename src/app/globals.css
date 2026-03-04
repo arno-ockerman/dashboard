@@ -39,7 +39,7 @@
   }
 
   .card {
-    @apply bg-zinc-900 border border-zinc-800 rounded-xl p-6;
+    @apply bg-zinc-900 border border-zinc-800 rounded-xl p-4 sm:p-6;
   }
 
   .card-hover {
@@ -47,23 +47,23 @@
   }
 
   .btn-primary {
-    @apply bg-brand-burgundy hover:bg-brand-burgundy-light text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2;
+    @apply bg-brand-burgundy hover:bg-brand-burgundy-light text-white px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2 touch-manipulation;
   }
 
   .btn-secondary {
-    @apply bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2 border border-zinc-700;
+    @apply bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2 border border-zinc-700 touch-manipulation;
   }
 
   .btn-ghost {
-    @apply text-zinc-400 hover:text-white hover:bg-white/5 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2;
+    @apply text-zinc-400 hover:text-white hover:bg-white/5 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2 touch-manipulation;
   }
 
   .input {
-    @apply bg-zinc-800 border border-zinc-700 text-white rounded-lg px-3 py-2 text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-brand-burgundy/50 focus:border-brand-burgundy/50 transition-all w-full;
+    @apply bg-zinc-800 border border-zinc-700 text-white rounded-lg px-3 py-2.5 min-h-[44px] text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-brand-burgundy/50 focus:border-brand-burgundy/50 transition-all w-full;
   }
 
   .select {
-    @apply bg-zinc-800 border border-zinc-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-burgundy/50 w-full;
+    @apply bg-zinc-800 border border-zinc-700 text-white rounded-lg px-3 py-2.5 min-h-[44px] text-sm focus:outline-none focus:ring-2 focus:ring-brand-burgundy/50 w-full;
   }
 
   .badge {
@@ -115,7 +115,7 @@
 }
 
 .modal-content {
-  @apply bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto;
+  @apply bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto;
 }
 
 /* Recharts custom */

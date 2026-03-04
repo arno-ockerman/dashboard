@@ -165,7 +165,7 @@ export default function GoalsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl text-white tracking-widest uppercase"
             style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
@@ -175,7 +175,7 @@ export default function GoalsPage() {
             {completedHabitsCount}/{habits.length} habits done today
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button onClick={() => setShowHabitModal(true)} className="btn-secondary">
             <Plus className="w-4 h-4" /> Habit
           </button>
@@ -217,14 +217,14 @@ export default function GoalsPage() {
                     disabled={togglingHabit === habit.id}
                     className={`card text-left hover:border-zinc-600 transition-all duration-200 ${
                       habit.completed_today ? 'opacity-70 border-brand-green/20' : ''
-                    }`}
+                    } active:scale-[0.99] touch-manipulation`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg flex-shrink-0 ${
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${
                         habit.completed_today ? 'bg-brand-green/20' : 'bg-zinc-800'
                       }`}>
                         {habit.completed_today ? (
-                          <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                          <CheckCircle2 className="w-6 h-6 text-brand-green" />
                         ) : (
                           habit.icon
                         )}
@@ -265,7 +265,7 @@ export default function GoalsPage() {
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-4">
-                {activeGoals.map((goal) => {
+                      {activeGoals.map((goal) => {
                   const progress = goal.target_value && goal.target_value > 0
                     ? Math.min((goal.current_value / goal.target_value) * 100, 100)
                     : 0
@@ -286,13 +286,28 @@ export default function GoalsPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => openEditGoal(goal)} className="btn-ghost p-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openEditGoal(goal)}
+                            className="w-11 h-11 rounded-xl flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/5 transition-colors touch-manipulation"
+                            aria-label="Edit goal"
+                          >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => toggleGoalComplete(goal)} className="btn-ghost p-1.5 text-green-400">
+                          <button
+                            type="button"
+                            onClick={() => toggleGoalComplete(goal)}
+                            className="w-11 h-11 rounded-xl flex items-center justify-center text-green-400 hover:bg-white/5 transition-colors touch-manipulation"
+                            aria-label="Mark goal complete"
+                          >
                             <Check className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => deleteGoal(goal.id)} className="btn-ghost p-1.5 text-red-400">
+                          <button
+                            type="button"
+                            onClick={() => deleteGoal(goal.id)}
+                            className="w-11 h-11 rounded-xl flex items-center justify-center text-red-400 hover:bg-white/5 transition-colors touch-manipulation"
+                            aria-label="Delete goal"
+                          >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -341,7 +356,11 @@ export default function GoalsPage() {
                   <div key={goal.id} className="card opacity-50 flex items-center gap-3">
                     <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
                     <span className="text-zinc-400 line-through">{goal.title}</span>
-                    <button onClick={() => toggleGoalComplete(goal)} className="ml-auto text-zinc-600 hover:text-zinc-400 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => toggleGoalComplete(goal)}
+                      className="ml-auto btn-ghost px-3 py-2 text-xs"
+                    >
                       Reopen
                     </button>
                   </div>
