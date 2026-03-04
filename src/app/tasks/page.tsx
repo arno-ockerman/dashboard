@@ -206,8 +206,19 @@ function TaskCard({ task, onStatusChange, onDelete }: TaskCardProps) {
         <h3 className="text-sm font-medium text-white leading-tight flex-1">{task.title}</h3>
         <button
           onClick={() => onDelete(task.id)}
-          className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 transition-all flex-shrink-0"
+          className="flex lg:hidden w-10 h-10 items-center justify-center rounded-xl text-zinc-500 hover:text-red-400 hover:bg-white/5 transition-colors flex-shrink-0 touch-manipulation"
           title="Delete task"
+          aria-label="Delete task"
+          type="button"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onDelete(task.id)}
+          className="hidden lg:group-hover:flex w-9 h-9 items-center justify-center rounded-lg text-zinc-600 hover:text-red-400 hover:bg-white/5 transition-all flex-shrink-0"
+          title="Delete task"
+          aria-label="Delete task"
+          type="button"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -381,7 +392,7 @@ export default function TasksPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1
             className="text-3xl text-white tracking-widest uppercase"
@@ -393,7 +404,7 @@ export default function TasksPage() {
             {stats.total} tasks — {stats.inProgress} in progress, {stats.high} urgent
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`btn-ghost ${showFilters || filterAgent || filterPriority ? 'text-brand-amber' : ''}`}
@@ -412,7 +423,7 @@ export default function TasksPage() {
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
           { label: 'Total', value: stats.total, color: 'text-zinc-400' },
           { label: 'To Do', value: stats.todo, color: 'text-zinc-400' },
@@ -432,7 +443,7 @@ export default function TasksPage() {
           <div className="flex items-center gap-2">
             <label className="text-xs text-zinc-400 font-medium">Agent</label>
             <select
-              className="select w-auto text-xs py-1.5"
+              className="select w-auto text-xs"
               value={filterAgent}
               onChange={(e) => setFilterAgent(e.target.value)}
             >
@@ -445,7 +456,7 @@ export default function TasksPage() {
           <div className="flex items-center gap-2">
             <label className="text-xs text-zinc-400 font-medium">Priority</label>
             <select
-              className="select w-auto text-xs py-1.5"
+              className="select w-auto text-xs"
               value={filterPriority}
               onChange={(e) => setFilterPriority(e.target.value)}
             >

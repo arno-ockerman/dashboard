@@ -547,7 +547,7 @@ function LegacyFilesPage() {
   )
 
   return (
-    <div className="flex flex-col h-full -m-6 lg:-m-8">
+    <div className="flex flex-col h-full -mx-4 -my-6 sm:-mx-6 lg:-mx-8 lg:-my-8">
       {/* Quick Access Bar */}
       <div className="px-4 lg:px-6 pt-4 lg:pt-6">
         <div className="flex items-center gap-3 mb-3">
