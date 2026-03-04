@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import {
-  Target, Plus, X, CheckCircle2, Circle, Flame, Edit2, Trash2, Check,
+  Target, Plus, X, CheckCircle2, Flame, Edit2, Trash2, Check, BarChart2,
 } from 'lucide-react'
+import HabitHeatmap from '@/components/HabitHeatmap'
 import type { Goal, Habit, GoalCategory } from '@/types'
+import type { HabitHistoryResponse } from '@/types/habits'
 
 const GOAL_CATEGORY_COLORS: Record<GoalCategory, { bg: string; text: string; border: string }> = {
   business: { bg: 'bg-brand-burgundy/20', text: 'text-red-300', border: 'border-brand-burgundy/30' },
@@ -49,6 +51,9 @@ export default function GoalsPage() {
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
   const [saving, setSaving] = useState(false)
   const [togglingHabit, setTogglingHabit] = useState<string | null>(null)
+  const [showAnalytics, setShowAnalytics] = useState(false)
+  const [historyData, setHistoryData] = useState<HabitHistoryResponse | null>(null)
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   const fetchData = async () => {
     setLoading(true)
@@ -65,6 +70,25 @@ export default function GoalsPage() {
   }
 
   useEffect(() => { fetchData() }, [])
+
+  const fetchHistoryData = async () => {
+    setHistoryLoading(true)
+    try {
+      const response = await fetch('/api/habits/history')
+      const data = await response.json()
+      setHistoryData(data)
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!showAnalytics || historyData) {
+      return
+    }
+
+    fetchHistoryData()
+  }, [showAnalytics, historyData])
 
   const saveGoal = async () => {
     if (!goalForm.title) return
@@ -138,7 +162,10 @@ export default function GoalsPage() {
       })
       setShowHabitModal(false)
       setHabitForm(defaultHabitForm)
-      fetchData()
+      await fetchData()
+      if (showAnalytics) {
+        await fetchHistoryData()
+      }
     } finally {
       setSaving(false)
     }
@@ -153,6 +180,9 @@ export default function GoalsPage() {
         body: JSON.stringify({ completed: !completed }),
       })
       await fetchData()
+      if (showAnalytics) {
+        await fetchHistoryData()
+      }
     } finally {
       setTogglingHabit(null)
     }
@@ -161,6 +191,7 @@ export default function GoalsPage() {
   const activeGoals = goals.filter((g) => !g.completed)
   const completedGoals = goals.filter((g) => g.completed)
   const completedHabitsCount = habits.filter((h) => h.completed_today).length
+  const habitHistoryById = new Map((historyData?.habits ?? []).map((habit) => [habit.id, habit]))
 
   return (
     <div>
@@ -193,13 +224,22 @@ export default function GoalsPage() {
         <>
           {/* Habits section */}
           <div className="mb-8">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Flame className="w-5 h-5 text-orange-400" />
-              Daily Habits
-              <span className="text-sm font-normal text-zinc-500">
-                {completedHabitsCount}/{habits.length} done
-              </span>
-            </h2>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Flame className="w-5 h-5 text-orange-400" />
+                Daily Habits
+                <span className="text-sm font-normal text-zinc-500">
+                  {completedHabitsCount}/{habits.length} done
+                </span>
+              </h2>
+              <button
+                onClick={() => setShowAnalytics((current) => !current)}
+                className="btn-secondary"
+              >
+                <BarChart2 className="w-4 h-4" />
+                {showAnalytics ? 'Simple' : 'Analytics'}
+              </button>
+            </div>
 
             {habits.length === 0 ? (
               <div className="card text-center py-12">
@@ -211,38 +251,67 @@ export default function GoalsPage() {
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {habits.map((habit) => (
-                  <button
+                  <div
                     key={habit.id}
-                    onClick={() => toggleHabit(habit.id, habit.completed_today ?? false)}
-                    disabled={togglingHabit === habit.id}
                     className={`card text-left hover:border-zinc-600 transition-all duration-200 ${
                       habit.completed_today ? 'opacity-70 border-brand-green/20' : ''
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg flex-shrink-0 ${
-                        habit.completed_today ? 'bg-brand-green/20' : 'bg-zinc-800'
-                      }`}>
-                        {habit.completed_today ? (
-                          <CheckCircle2 className="w-5 h-5 text-brand-green" />
-                        ) : (
-                          habit.icon
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-sm font-medium ${
-                          habit.completed_today ? 'text-zinc-400 line-through' : 'text-white'
+                    <button
+                      onClick={() => toggleHabit(habit.id, habit.completed_today ?? false)}
+                      disabled={togglingHabit === habit.id}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg flex-shrink-0 ${
+                          habit.completed_today ? 'bg-brand-green/20' : 'bg-zinc-800'
                         }`}>
-                          {habit.title}
-                        </p>
-                        {habit.streak > 0 && (
-                          <p className="text-xs text-orange-400 mt-0.5">
-                            🔥 {habit.streak} day streak
+                          {habit.completed_today ? (
+                            <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                          ) : (
+                            habit.icon
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm font-medium ${
+                            habit.completed_today ? 'text-zinc-400 line-through' : 'text-white'
+                          }`}>
+                            {habit.title}
                           </p>
-                        )}
+                          {habit.streak > 0 && (
+                            <p className="text-xs text-orange-400 mt-0.5">
+                              🔥 {habit.streak} day streak
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </button>
+                    </button>
+
+                    {showAnalytics && (
+                      historyLoading && !historyData ? (
+                        <div className="mt-4 border-t border-zinc-800/80 pt-4 space-y-2">
+                          {[0, 1, 2].map((row) => (
+                            <div
+                              key={row}
+                              className="h-3 rounded bg-zinc-800/70 animate-pulse"
+                            />
+                          ))}
+                        </div>
+                      ) : historyData ? (
+                        <HabitHeatmap
+                          habit={habitHistoryById.get(habit.id) ?? {
+                            ...habit,
+                            longestStreak: 0,
+                            completionRate: 0,
+                            completions: Object.fromEntries(
+                              historyData.dateRange.map((date) => [date, false])
+                            ),
+                          }}
+                          dateRange={historyData.dateRange}
+                        />
+                      ) : null
+                    )}
+                  </div>
                 ))}
               </div>
             )}
