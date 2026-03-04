@@ -44,6 +44,21 @@ export interface Sale {
   created_at: string
 }
 
+export interface SalesCategoryBreakdown {
+  category: ProductCategory
+  total: number
+  count: number
+}
+
+export interface SalesStats {
+  this_month: number
+  last_month: number
+  growth_pct: number
+  total_sales: number
+  avg_sale: number
+  by_category: SalesCategoryBreakdown[]
+}
+
 export interface Goal {
   id: string
   title: string

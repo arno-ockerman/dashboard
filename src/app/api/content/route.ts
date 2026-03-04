@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { formatSupabaseError, isMissingTableError } from '@/lib/supabase-error'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,11 +18,14 @@ export async function GET(request: NextRequest) {
     if (weekEnd) query = query.lte('scheduled_date', weekEnd)
 
     const { data, error } = await query
-    if (error) throw error
+    if (error) {
+      if (isMissingTableError(error)) return NextResponse.json([])
+      throw error
+    }
 
     return NextResponse.json(data)
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    return NextResponse.json({ error: formatSupabaseError(error) }, { status: 500 })
   }
 }
 
@@ -34,10 +38,18 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      if (isMissingTableError(error)) {
+        return NextResponse.json(
+          { error: 'Content table missing. Run dashboard schema setup/migrations.' },
+          { status: 503 }
+        )
+      }
+      throw error
+    }
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    return NextResponse.json({ error: formatSupabaseError(error) }, { status: 500 })
   }
 }
 
@@ -52,9 +64,17 @@ export async function PUT(request: NextRequest) {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      if (isMissingTableError(error)) {
+        return NextResponse.json(
+          { error: 'Content table missing. Run dashboard schema setup/migrations.' },
+          { status: 503 }
+        )
+      }
+      throw error
+    }
     return NextResponse.json(data)
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    return NextResponse.json({ error: formatSupabaseError(error) }, { status: 500 })
   }
 }
