@@ -182,7 +182,7 @@ function EmojiRating({
           <button
             key={i}
             onClick={() => onChange(i + 1)}
-            className={`text-2xl p-2 rounded-lg transition-all duration-200 ${
+            className={`text-2xl p-3 min-h-[44px] min-w-[44px] rounded-xl transition-all duration-200 touch-manipulation ${
               value === i + 1
                 ? 'bg-brand-burgundy/30 scale-125 ring-2 ring-brand-burgundy'
                 : 'hover:bg-zinc-800 hover:scale-110'
@@ -445,14 +445,15 @@ export default function FocusPage() {
                         if (!taskValue.trim()) return
                         updateFocus({ [doneKey]: !isDone })
                       }}
-                      className={`flex-shrink-0 transition-all duration-200 ${
+                      type="button"
+                      className={`flex-shrink-0 p-2 rounded-xl transition-all duration-200 active:scale-95 touch-manipulation ${
                         taskValue.trim() ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'
                       }`}
                     >
                       {isDone ? (
-                        <CheckCircle2 className="w-7 h-7 text-brand-green drop-shadow-[0_0_8px_rgba(66,92,89,0.8)]" />
+                        <CheckCircle2 className="w-9 h-9 text-brand-green drop-shadow-[0_0_8px_rgba(66,92,89,0.8)]" />
                       ) : (
-                        <Circle className="w-7 h-7 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                        <Circle className="w-9 h-9 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
                       )}
                     </button>
                     <div className="flex-1 relative">
@@ -504,11 +505,11 @@ export default function FocusPage() {
                 isBreak={isBreak}
               />
 
-              <div className="flex items-center justify-center gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 mt-6">
                 {!running ? (
                   <button
                     onClick={startPomodoro}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-brand-burgundy hover:bg-brand-burgundy-light text-white rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105"
+                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 min-h-[44px] bg-brand-burgundy hover:bg-brand-burgundy-light text-white rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 touch-manipulation"
                   >
                     <Play className="w-4 h-4" />
                     {pomSeconds === pomTotal ? 'Start' : 'Resume'}
@@ -516,7 +517,7 @@ export default function FocusPage() {
                 ) : (
                   <button
                     onClick={pausePomodoro}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-white rounded-xl text-sm font-semibold transition-all duration-200"
+                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 min-h-[44px] bg-zinc-700 hover:bg-zinc-600 text-white rounded-xl text-sm font-semibold transition-all duration-200 touch-manipulation"
                   >
                     <Pause className="w-4 h-4" />
                     Pause
@@ -524,10 +525,11 @@ export default function FocusPage() {
                 )}
                 <button
                   onClick={resetPomodoro}
-                  className="p-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-all duration-200"
+                  className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 min-h-[44px] rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-all duration-200 touch-manipulation"
                   title="Reset"
                 >
                   <RotateCcw className="w-4 h-4" />
+                  <span className="sm:hidden">Reset</span>
                 </button>
               </div>
 

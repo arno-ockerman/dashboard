@@ -152,9 +152,19 @@ function PostCard({ post, onClick, onDelete }: {
       )}
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(post.id) }}
-        className="absolute top-1 right-1 hidden group-hover:flex w-5 h-5 bg-zinc-900 rounded items-center justify-center text-zinc-500 hover:text-red-400"
+        className="absolute top-2 right-2 flex lg:hidden w-8 h-8 bg-zinc-900/80 border border-zinc-800 rounded-lg items-center justify-center text-zinc-400 active:scale-95 touch-manipulation"
+        aria-label="Delete post"
+        type="button"
       >
-        <X className="w-3 h-3" />
+        <X className="w-4 h-4" />
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete(post.id) }}
+        className="absolute top-2 right-2 hidden lg:group-hover:flex w-6 h-6 bg-zinc-900 rounded items-center justify-center text-zinc-500 hover:text-red-400"
+        aria-label="Delete post"
+        type="button"
+      >
+        <X className="w-3.5 h-3.5" />
       </button>
     </button>
   )
@@ -518,6 +528,22 @@ export default function ContentPage() {
     published: posts.filter((p) => p.status === 'published').length,
   }
 
+  const rangeStart = viewMode === 'week' ? weekStart : monthStart
+  const rangeEnd = viewMode === 'week' ? weekEnd : monthEnd
+  const mobileScheduledPosts = posts
+    .filter((p) => {
+      if (!p.scheduled_date) return false
+      const d = parseISO(p.scheduled_date)
+      return d >= rangeStart && d <= rangeEnd
+    })
+    .sort((a, b) => parseISO(a.scheduled_date!).getTime() - parseISO(b.scheduled_date!).getTime())
+    .reduce((acc, post) => {
+      const key = post.scheduled_date!
+      acc[key] = acc[key] ? [...acc[key], post] : [post]
+      return acc
+    }, {} as Record<string, ContentPost[]>)
+  const mobileScheduledDates = Object.keys(mobileScheduledPosts).sort()
+
   return (
     <div>
       {/* Header */}
@@ -579,7 +605,7 @@ export default function ContentPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {(Object.entries(STATUS_CONFIG) as [PostStatus, typeof STATUS_CONFIG[PostStatus]][]).map(([key, val]) => (
           <button
             key={key}
@@ -615,9 +641,67 @@ export default function ContentPage() {
         ))}
       </div>
 
+      {/* Mobile list view (sorted by date) */}
+      <div className="lg:hidden card mb-6 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <List className="w-4 h-4 text-zinc-500" />
+            <p className="text-sm font-semibold text-white">Planned posts</p>
+          </div>
+          <button onClick={() => openNew()} className="btn-primary px-3 py-2 text-xs">
+            <Plus className="w-4 h-4" /> Nieuw
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-8 text-zinc-600 text-sm">
+            <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+            Loading...
+          </div>
+        ) : mobileScheduledDates.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-zinc-400 text-sm">Geen geplande posts in deze periode</p>
+            <button onClick={() => openNew()} className="btn-secondary mt-4 text-sm px-4 py-3">
+              <Plus className="w-4 h-4" /> Plan je eerste post
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {mobileScheduledDates.map((date) => (
+              <div key={date} className="border border-zinc-800 rounded-xl overflow-hidden bg-zinc-900/20">
+                <div className="flex items-center justify-between px-4 py-3 bg-zinc-900/40 border-b border-zinc-800">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">
+                      {format(parseISO(date), 'EEEE d MMM')}
+                    </p>
+                    <p className="text-xs text-zinc-500">{format(parseISO(date), 'yyyy-MM-dd')}</p>
+                  </div>
+                  <button
+                    onClick={() => openNew(date)}
+                    className="btn-ghost px-3 py-2 text-xs flex-shrink-0"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="p-3 space-y-2">
+                  {mobileScheduledPosts[date].map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onClick={() => openEdit(post)}
+                      onDelete={deletePost}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Calendar: Week View */}
       {viewMode === 'week' && (
-        <div className="grid grid-cols-7 gap-2 mb-8">
+        <div className="hidden lg:grid grid-cols-7 gap-2 mb-8">
           {weekDays.map((day) => {
             const dayPosts = getPostsForDay(day)
             const today = isToday(day)
@@ -654,7 +738,7 @@ export default function ContentPage() {
 
       {/* Calendar: Month View */}
       {viewMode === 'month' && (
-        <div className="card mb-8 overflow-hidden p-4">
+        <div className="hidden lg:block card mb-8 overflow-hidden p-4">
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-2">
             {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map((d) => (
