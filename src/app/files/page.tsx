@@ -741,17 +741,5 @@ function LegacyFilesPage() {
 }
 
 export default function FilesPage() {
-  return (
-    <div className="card">
-      <h1
-        className="text-3xl text-white tracking-widest uppercase"
-        style={{ fontFamily: "'Bebas Neue', sans-serif" }}
-      >
-        Files
-      </h1>
-      <p className="text-zinc-400 text-sm mt-2">
-        Files viewer coming soon — use Telegram to request files from Jarvis.
-      </p>
-    </div>
-  )
+  return <LegacyFilesPage />
 }
