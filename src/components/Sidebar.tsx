@@ -24,6 +24,7 @@ import {
   Bot,
   Upload,
   Lightbulb,
+  Heart,
 } from 'lucide-react'
 
 const NAV_SECTIONS = [
@@ -50,6 +51,7 @@ const NAV_SECTIONS = [
       { href: '/clients', label: 'Clients', icon: Users },
       { href: '/content', label: 'Content', icon: Calendar },
       { href: '/goals', label: 'Goals & Habits', icon: Target },
+      { href: '/health', label: 'Health & Recovery', icon: Heart },
       { href: '/insights', label: 'BI Council', icon: Lightbulb },
     ],
   },
