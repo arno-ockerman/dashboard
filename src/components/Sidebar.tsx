@@ -19,12 +19,11 @@ import {
   ListTodo,
   Folder,
   FolderOpen,
-  FileText,
   Settings,
   Bot,
-  Upload,
   Lightbulb,
   Heart,
+  Bell,
 } from 'lucide-react'
 
 const NAV_SECTIONS = [
@@ -65,6 +64,7 @@ const NAV_SECTIONS = [
   {
     label: 'Systeem',
     links: [
+      { href: '/notifications', label: 'Notifications', icon: Bell },
       { href: '/settings', label: 'Instellingen', icon: Settings },
     ],
   },
@@ -72,8 +72,22 @@ const NAV_SECTIONS = [
 
 export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   const pathname = usePathname()
   const drawerId = useId()
+
+  // Fetch unread notification count on mount (and periodically)
+  useEffect(() => {
+    const fetchUnread = () => {
+      fetch('/api/notifications?unread=true&limit=1')
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then((data: { unreadCount?: number }) => setUnreadCount(data.unreadCount ?? 0))
+        .catch(() => {})
+    }
+    fetchUnread()
+    const interval = setInterval(fetchUnread, 60_000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -122,6 +136,8 @@ export default function Sidebar() {
             <div className="space-y-1">
               {section.links.map(({ href, label, icon: Icon }) => {
                 const isActive = pathname === href || (href !== '/' && pathname.startsWith(href))
+                const isNotifications = href === '/notifications'
+                const showBadge = isNotifications && unreadCount > 0
                 return (
                   <Link
                     key={href}
@@ -135,9 +151,13 @@ export default function Sidebar() {
                   >
                     <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-brand-burgundy' : ''}`} />
                     {label}
-                    {isActive && (
+                    {showBadge ? (
+                      <span className="ml-auto text-xs bg-red-600 text-white rounded-full px-1.5 py-0.5 min-w-[20px] text-center leading-none">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    ) : isActive ? (
                       <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-burgundy" />
-                    )}
+                    ) : null}
                   </Link>
                 )
               })}
