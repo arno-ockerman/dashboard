@@ -174,3 +174,18 @@ export interface Project {
   last_update: string
   metadata: Record<string, unknown>
 }
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export type NotificationType = 'success' | 'error' | 'warning' | 'info'
+
+export interface Notification {
+  id: string
+  type: NotificationType
+  title: string
+  message: string
+  source: string
+  read: boolean
+  metadata: Record<string, unknown>
+  created_at: string
+}
