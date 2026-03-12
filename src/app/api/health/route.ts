@@ -11,11 +11,38 @@ export async function GET(request: NextRequest) {
     since.setDate(since.getDate() - days)
     const sinceStr = since.toISOString().split('T')[0]
 
-    const { data, error } = await supabaseAdmin
-      .from('health_snapshots')
+    // Try health_metrics first (primary table from Apple Health import),
+    // fall back to health_snapshots (legacy/manual entries)
+    let data: any[] | null = null
+    let error: any = null
+
+    const metricsRes = await supabaseAdmin
+      .from('health_metrics')
       .select('*')
       .gte('date', sinceStr)
       .order('date', { ascending: false })
+
+    if (!metricsRes.error && metricsRes.data && metricsRes.data.length > 0) {
+      // Map health_metrics columns to health_snapshots format for frontend compatibility
+      data = metricsRes.data.map((r: any) => ({
+        ...r,
+        lean_mass_kg: r.lean_body_mass_kg,
+        active_calories: r.active_kcal ? Math.round(r.active_kcal) : null,
+        exercise_min: r.exercise_minutes,
+        sleep_hours: r.sleep_total_hours,
+        sleep_awakenings: r.sleep_awake_count,
+        steps: r.steps,
+      }))
+    } else {
+      // Fallback to health_snapshots
+      const snapshotsRes = await supabaseAdmin
+        .from('health_snapshots')
+        .select('*')
+        .gte('date', sinceStr)
+        .order('date', { ascending: false })
+      data = snapshotsRes.data
+      error = snapshotsRes.error
+    }
 
     if (error) throw error
 
