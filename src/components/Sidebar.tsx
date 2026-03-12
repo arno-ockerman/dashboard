@@ -25,6 +25,7 @@ import {
   Heart,
   Bell,
 } from 'lucide-react'
+import MissionControl from './MissionControl'
 
 const NAV_SECTIONS = [
   {
@@ -165,6 +166,9 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
+
+      {/* Real-time Status */}
+      <MissionControl />
 
       {/* Bottom brand */}
       <div className="p-4 border-t border-zinc-800">
