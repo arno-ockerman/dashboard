@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
 import { Bot, Zap, Activity, Calendar, Heart, Terminal } from 'lucide-react'
 
 interface AgentActivity {
@@ -36,16 +35,23 @@ export default function MissionControl() {
   const [nextPost, setNextPost] = useState<string | null>(null)
 
   useEffect(() => {
-    // Initial fetch
-    const fetchInitial = async () => {
-      const { data: agentData } = await supabase.from('agent_activity').select('*')
-      if (agentData) {
-        const activityMap = agentData.reduce((acc, curr) => ({ ...acc, [curr.agent_id]: curr }), {})
-        setActivities(activityMap)
-      }
+    const fetchData = async () => {
+      // Fetch agent activity via API route
+      try {
+        const agentRes = await fetch('/api/agents')
+        const agentData = await agentRes.json()
+        if (Array.isArray(agentData)) {
+          const activityMap = agentData.reduce((acc: Record<string, AgentActivity>, curr: AgentActivity) => ({ ...acc, [curr.agent_id]: curr }), {})
+          setActivities(activityMap)
+        }
+      } catch (e) {}
 
-      const { data: feedData } = await supabase.from('system_activity').select('*').order('timestamp', { ascending: false }).limit(3)
-      if (feedData) setFeed(feedData)
+      // Fetch system feed via API route
+      try {
+        const feedRes = await fetch('/api/feed')
+        const feedData = await feedRes.json()
+        if (Array.isArray(feedData)) setFeed(feedData)
+      } catch (e) {}
       
       // Fetch health summary
       try {
@@ -66,29 +72,11 @@ export default function MissionControl() {
       } catch (e) {}
     }
 
-    fetchInitial()
+    fetchData()
 
-    // Realtime subscriptions
-    const agentSub = supabase
-      .channel('agent_activity_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'agent_activity' }, (payload) => {
-        const updated = payload.new as AgentActivity
-        setActivities(prev => ({ ...prev, [updated.agent_id]: updated }))
-      })
-      .subscribe()
-
-    const feedSub = supabase
-      .channel('system_activity_changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'system_activity' }, (payload) => {
-        const newItem = payload.new as SystemActivity
-        setFeed(prev => [newItem, ...prev].slice(0, 3))
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(agentSub)
-      supabase.removeChannel(feedSub)
-    }
+    // Poll every 30s instead of realtime (anon key issue)
+    const interval = setInterval(fetchData, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   return (
@@ -109,7 +97,7 @@ export default function MissionControl() {
         </div>
       </div>
 
-      {/* Live Feed (Marquee-like or small list) */}
+      {/* Live Feed */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest flex items-center gap-1">
@@ -156,7 +144,6 @@ export default function MissionControl() {
                   {agent.id.slice(0, 3)}
                 </span>
                 
-                {/* Tooltip on hover */}
                 {activity?.current_task && (
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 p-2 bg-zinc-950 border border-zinc-800 rounded shadow-xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
                     <p className="text-[8px] text-brand-amber font-bold uppercase mb-1">{agent.name}</p>
