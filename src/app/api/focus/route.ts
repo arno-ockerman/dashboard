@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       .in('date', dates)
       .order('date', { ascending: false })
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
 
     // Calculate streak: count consecutive days from today that have at least 1 task
     const dataMap = new Map((data || []).map((d) => [d.date, d]))
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     .eq('date', date)
     .maybeSingle()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
 
   return NextResponse.json({ focus: data })
 }
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
 
   return NextResponse.json({ focus: data })
 }
