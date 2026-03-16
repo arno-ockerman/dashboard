@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Zap,
   Crosshair,
+  Sunrise,
   ListTodo,
   Folder,
   FolderOpen,
@@ -33,6 +34,7 @@ const NAV_SECTIONS = [
     label: 'Workspace',
     links: [
       { href: '/', label: 'Command Center', icon: LayoutDashboard },
+      { href: '/brief', label: 'Daily Brief', icon: Sunrise },
       { href: '/focus', label: 'Big 3 Focus', icon: Crosshair },
     ],
   },
