@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { startOfISOWeek, format } from 'date-fns'
 
 // ─── GET /api/review/reflection?week=YYYY-MM-DD ───────────────────────────────

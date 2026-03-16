@@ -5,7 +5,7 @@ import { readdir, readFile } from 'fs/promises'
 import path from 'path'
 import { format, subDays, subMonths } from 'date-fns'
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { isMissingTableError } from '@/lib/supabase-error'
 
 type Period = 'today' | 'week' | 'month' | 'all'

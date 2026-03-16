@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { format, subDays } from 'date-fns'
 
 // GET /api/focus?date=YYYY-MM-DD  — fetch today's or specific day's focus

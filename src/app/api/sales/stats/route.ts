@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { addMonths, format } from 'date-fns'
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { formatSupabaseError, isMissingTableError } from '@/lib/supabase-error'
 import type { ProductCategory, SalesCategoryBreakdown, SalesStats } from '@/types'
 

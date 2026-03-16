@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
  * using the exec_sql RPC if available, otherwise returns instructions.
  */
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 const MIGRATION_SQL = `
 CREATE TABLE IF NOT EXISTS content_posts (
