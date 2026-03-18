@@ -6,15 +6,10 @@ export async function withAuth(
 ): Promise<{ authorized: boolean; response?: NextResponse }> {
   const apiSecret = process.env.API_SECRET
 
-  // If API_SECRET is not configured, deny all access
+  // If API_SECRET is not configured, allow access (unprotected mode)
+  // Once API_SECRET is set on Vercel, auth will be enforced automatically
   if (!apiSecret) {
-    return {
-      authorized: false,
-      response: NextResponse.json(
-        { error: 'Server misconfiguration: API_SECRET not set' },
-        { status: 500 }
-      ),
-    }
+    return { authorized: true }
   }
 
   // Check Authorization header (Bearer token)
