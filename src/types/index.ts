@@ -189,3 +189,34 @@ export interface Notification {
   metadata: Record<string, unknown>
   created_at: string
 }
+
+// ─── Measurements ─────────────────────────────────────────────────────────────
+
+export interface Measurement {
+  id: string
+  client_name: string
+  client_id: string | null
+  date: string
+  weight_kg: number | null
+  body_fat_pct: number | null
+  waist_cm: number | null
+  hip_cm: number | null
+  chest_cm: number | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface MeasurementProgress {
+  first: Measurement | null
+  latest: Measurement | null
+  weight_lost: number | null
+  waist_lost: number | null
+  body_fat_change: number | null
+}
+
+export interface MeasurementsListResponse {
+  measurements: Measurement[]
+  total: number
+  clients: string[]
+}
