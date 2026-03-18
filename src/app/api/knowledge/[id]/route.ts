@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { knowledgeUpdateSchema } from '@/lib/validators'
 
 export async function PUT(
   request: NextRequest,
@@ -11,9 +12,13 @@ export async function PUT(
   if (!auth.authorized) return auth.response!
   try {
     const body = await request.json()
+    const parsed = knowledgeUpdateSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    }
     const { data, error } = await supabaseAdmin
       .from('knowledge')
-      .update(body)
+      .update(parsed.data)
       .eq('id', params.id)
       .select()
       .single()

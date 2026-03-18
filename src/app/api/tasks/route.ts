@@ -1,6 +1,7 @@
 import { NextResponse , NextRequest } from 'next/server'
 import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { taskSchema } from '@/lib/validators'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,11 +39,11 @@ export async function POST(req: NextRequest) {
   if (!auth.authorized) return auth.response!
   try {
     const body = await req.json()
-    const { title, description, assigned_to, priority, status, project, created_by } = body
-
-    if (!title) {
-      return NextResponse.json({ error: 'title is required' }, { status: 400 })
+    const parsed = taskSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
     }
+    const { title, description, assigned_to, priority, status, project, created_by } = parsed.data
 
     const { data, error } = await supabaseAdmin
       .from('tasks')

@@ -1,6 +1,7 @@
 import { NextResponse , NextRequest } from 'next/server'
 import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { teamActivitySchema } from '@/lib/validators'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,12 +28,12 @@ export async function POST(req: NextRequest) {
   const auth = await withAuth(req)
   if (!auth.authorized) return auth.response!
   try {
-    const body = await req.json()
-    const { agent_name, action_type, description, metadata } = body
-
-    if (!agent_name || !action_type) {
-      return NextResponse.json({ error: 'agent_name and action_type required' }, { status: 400 })
+    const raw = await req.json()
+    const parsed = teamActivitySchema.safeParse(raw)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
     }
+    const { agent_name, action_type, description, metadata } = parsed.data
 
     const { data, error } = await supabaseAdmin
       .from('team_activity')

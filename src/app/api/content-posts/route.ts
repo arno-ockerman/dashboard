@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { contentPostSchema } from '@/lib/validators'
 import { formatSupabaseError, isMissingTableError } from '@/lib/supabase-error'
 
 type ContentPostStatus = 'idea' | 'draft' | 'scheduled' | 'published'
@@ -100,7 +101,12 @@ export async function POST(request: NextRequest) {
   const auth = await withAuth(request)
   if (!auth.authorized) return auth.response!
   try {
-    const body = await request.json()
+    const raw = await request.json()
+    const parsed = contentPostSchema.safeParse(raw)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    }
+    const body = parsed.data
     const { data, error } = await supabaseAdmin
       .from('content_posts')
       .insert({
@@ -151,8 +157,13 @@ export async function PUT(request: NextRequest) {
   const auth = await withAuth(request)
   if (!auth.authorized) return auth.response!
   try {
-    const body = await request.json()
-    const { id, ...rest } = body
+    const raw = await request.json()
+    const { id, ...restRaw } = raw
+    const parsedUpdate = contentPostSchema.partial().safeParse(restRaw)
+    if (!parsedUpdate.success) {
+      return NextResponse.json({ error: parsedUpdate.error.flatten() }, { status: 400 })
+    }
+    const rest = parsedUpdate.data
     const { data, error } = await supabaseAdmin
       .from('content_posts')
       .update({ ...rest, updated_at: new Date().toISOString() })

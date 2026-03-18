@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { settingSchema } from '@/lib/validators'
 
 export async function GET(request: NextRequest) {
   const auth = await withAuth(request)
@@ -49,12 +50,12 @@ export async function PUT(request: NextRequest) {
   const auth = await withAuth(request)
   if (!auth.authorized) return auth.response!
   try {
-    const body = await request.json()
-    const { key, value } = body
-
-    if (!key) {
-      return NextResponse.json({ error: 'Missing key' }, { status: 400 })
+    const raw = await request.json()
+    const parsed = settingSchema.safeParse(raw)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
     }
+    const { key, value } = parsed.data
 
     const { data, error } = await supabaseAdmin
       .from('dashboard_settings')
