@@ -1,10 +1,13 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { startOfISOWeek, format } from 'date-fns'
 
 // ─── GET /api/review/reflection?week=YYYY-MM-DD ───────────────────────────────
 export async function GET(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   try {
     const { searchParams } = new URL(request.url)
     const weekParam = searchParams.get('week')
@@ -27,6 +30,8 @@ export async function GET(request: NextRequest) {
 // ─── POST /api/review/reflection ─────────────────────────────────────────────
 // Body: { week_start, wins?, lessons?, next_focus?, score? }
 export async function POST(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   try {
     const body = await request.json() as {
       week_start: string

@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 
 function extractYouTubeId(url: string): string | null {
   const patterns = [
@@ -23,6 +24,8 @@ function detectType(url: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   try {
     const { url } = await request.json()
     if (!url) return NextResponse.json({ error: 'URL required' }, { status: 400 })

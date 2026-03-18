@@ -1,8 +1,11 @@
 export const dynamic = 'force-dynamic'
-import { NextResponse } from 'next/server'
+import { NextResponse , NextRequest } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   const start = Date.now()
   try {
     const { error } = await supabaseAdmin.from('clients').select('id').limit(1)

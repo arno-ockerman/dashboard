@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 interface ImportRow {
@@ -21,6 +22,8 @@ interface ImportResult {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   try {
     const body = await request.json()
     const rows: ImportRow[] = body.rows || []

@@ -1,9 +1,12 @@
-import { NextResponse } from 'next/server'
+import { NextResponse , NextRequest } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
   try {
     const { searchParams } = new URL(req.url)
     const assignedTo = searchParams.get('assigned_to')
@@ -30,7 +33,9 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
   try {
     const body = await req.json()
     const { title, description, assigned_to, priority, status, project, created_by } = body

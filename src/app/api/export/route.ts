@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 function toCSV(rows: Record<string, unknown>[]): string {
@@ -19,6 +20,8 @@ function toCSV(rows: Record<string, unknown>[]): string {
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   try {
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') || 'clients'

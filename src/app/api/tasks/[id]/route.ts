@@ -1,12 +1,15 @@
-import { NextResponse } from 'next/server'
+import { NextResponse , NextRequest } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
   try {
     const body = await req.json()
     const { id } = params
@@ -28,7 +31,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

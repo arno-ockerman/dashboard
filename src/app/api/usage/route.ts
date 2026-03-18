@@ -5,6 +5,7 @@ import { readdir, readFile } from 'fs/promises'
 import path from 'path'
 import { format, subDays, subMonths } from 'date-fns'
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { isMissingTableError } from '@/lib/supabase-error'
 
@@ -312,6 +313,8 @@ async function readSupabaseUsage(period: Period) {
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   try {
     const period = normalizePeriod(request.nextUrl.searchParams.get('period'))
     const [jsonlRecords, supabaseRecords] = await Promise.all([

@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 
 // When deployed on Vercel, all file ops are proxied to the local agency server
 // running on TrueNAS. Set WORKSPACE_API_URL and WORKSPACE_API_KEY in Vercel env.
@@ -19,6 +20,8 @@ function proxyHeaders(): HeadersInit {
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   const { searchParams } = new URL(request.url)
 
   if (!WORKSPACE_API_URL) {
@@ -41,6 +44,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   if (!WORKSPACE_API_URL) {
     return NextResponse.json({ error: 'WORKSPACE_API_URL not configured' }, { status: 503 })
   }

@@ -1,11 +1,14 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   try {
     const { completed, date } = await request.json()
     const today = date || new Date().toISOString().split('T')[0]

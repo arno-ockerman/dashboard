@@ -1,9 +1,12 @@
-import { NextResponse } from 'next/server'
+import { NextResponse , NextRequest } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   try {
     const { data, error } = await supabaseAdmin
       .from('projects')
@@ -19,7 +22,9 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
   try {
     const body = await req.json()
     const { name, description, status, github_repo, vercel_url, metadata } = body

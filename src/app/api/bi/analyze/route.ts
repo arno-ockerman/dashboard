@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { subDays, format } from 'date-fns'
 
@@ -395,6 +396,8 @@ function runSynthesizer(
 // ─── Main Handler ─────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   try {
     const today = format(new Date(), 'yyyy-MM-dd')
 

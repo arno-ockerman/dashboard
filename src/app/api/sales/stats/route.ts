@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic'
 
 import { addMonths, format } from 'date-fns'
-import { NextResponse } from 'next/server'
+import { NextResponse , NextRequest } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { formatSupabaseError, isMissingTableError } from '@/lib/supabase-error'
 import type { ProductCategory, SalesCategoryBreakdown, SalesStats } from '@/types'
@@ -20,7 +21,9 @@ function monthStart(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1)
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   try {
     const { data, error } = await supabaseAdmin
       .from('sales')

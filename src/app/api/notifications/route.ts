@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import type { Notification, NotificationType } from '@/types'
 
@@ -9,6 +10,8 @@ import type { Notification, NotificationType } from '@/types'
 //   limit=50       — max results (default 50)
 // Returns: { notifications: Notification[], unreadCount: number }
 export async function GET(req: NextRequest) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
   const { searchParams } = req.nextUrl
   const onlyUnread = searchParams.get('unread') === 'true'
   const typeFilter = searchParams.get('type') as NotificationType | null
@@ -50,6 +53,8 @@ export async function GET(req: NextRequest) {
 // Body: { type, title, message, source, metadata? }
 // Returns: created notification
 export async function POST(req: NextRequest) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
   let body: Partial<Notification>
   try {
     body = await req.json()

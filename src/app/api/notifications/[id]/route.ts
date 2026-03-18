@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 // PATCH /api/notifications/[id]
@@ -7,6 +8,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
   const { id } = params
   let body: { read?: boolean }
   try {
@@ -35,9 +38,11 @@ export async function PATCH(
 
 // DELETE /api/notifications/[id]
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
   const { id } = params
 
   const { error } = await supabaseAdmin

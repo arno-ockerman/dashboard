@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function LoginPage() {
+function LoginForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -37,6 +37,36 @@ export default function LoginPage() {
   }
 
   return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter password"
+          className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-[#620E06] focus:ring-1 focus:ring-[#620E06] transition-colors"
+          autoFocus
+          disabled={loading}
+        />
+      </div>
+
+      {error && (
+        <p className="text-red-400 text-sm text-center">{error}</p>
+      )}
+
+      <button
+        type="submit"
+        disabled={loading || !password}
+        className="w-full py-3 bg-[#620E06] hover:bg-[#7a1208] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors uppercase tracking-wider text-sm"
+      >
+        {loading ? 'Checking...' : 'Enter'}
+      </button>
+    </form>
+  )
+}
+
+export default function LoginPage() {
+  return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
@@ -44,31 +74,9 @@ export default function LoginPage() {
           <p className="text-zinc-500 text-sm mt-1">Dashboard Access</p>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
-              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-[#620E06] focus:ring-1 focus:ring-[#620E06] transition-colors"
-              autoFocus
-              disabled={loading}
-            />
-          </div>
-
-          {error && (
-            <p className="text-red-400 text-sm text-center">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading || !password}
-            className="w-full py-3 bg-[#620E06] hover:bg-[#7a1208] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors uppercase tracking-wider text-sm"
-          >
-            {loading ? 'Checking...' : 'Enter'}
-          </button>
-        </form>
+        <Suspense fallback={<div className="text-zinc-500 text-center">Loading...</div>}>
+          <LoginForm />
+        </Suspense>
 
         <p className="text-zinc-700 text-xs text-center mt-6">
           🔒 Protected dashboard

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { addMonths, format, parse } from 'date-fns'
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { formatSupabaseError, isMissingTableError } from '@/lib/supabase-error'
 import type { ProductCategory } from '@/types'
@@ -33,6 +34,8 @@ function buildMonthRange(month: string) {
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   try {
     const { searchParams } = new URL(request.url)
     const month = searchParams.get('month')
@@ -73,6 +76,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await withAuth(request)
+  if (!auth.authorized) return auth.response!
   try {
     const body = await request.json()
 
