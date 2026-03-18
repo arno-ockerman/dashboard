@@ -27,6 +27,7 @@ import {
   Bell,
   Trophy,
   Ruler,
+  Flame,
 } from 'lucide-react'
 import MissionControl from './MissionControl'
 
@@ -53,6 +54,7 @@ const NAV_SECTIONS = [
       { href: '/sales', label: 'Sales', icon: DollarSign },
       { href: '/usage', label: 'Usage', icon: BarChart2 },
       { href: '/clients', label: 'Clients', icon: Users },
+      { href: '/challenges', label: '21-Day Challenges', icon: Flame },
       { href: '/measurements', label: 'Metingen', icon: Ruler },
       { href: '/content', label: 'Content', icon: Calendar },
       { href: '/goals', label: 'Goals & Habits', icon: Target },
