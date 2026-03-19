@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { reflectionSchema } from '@/lib/validators'
 import { startOfISOWeek, format } from 'date-fns'
 
 // ─── GET /api/review/reflection?week=YYYY-MM-DD ───────────────────────────────
@@ -33,17 +34,12 @@ export async function POST(request: NextRequest) {
   const auth = await withAuth(request)
   if (!auth.authorized) return auth.response!
   try {
-    const body = await request.json() as {
-      week_start: string
-      wins?: string
-      lessons?: string
-      next_focus?: string
-      score?: number
+    const raw = await request.json()
+    const parsed = reflectionSchema.safeParse(raw)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
     }
-
-    if (!body.week_start) {
-      return NextResponse.json({ error: 'week_start required' }, { status: 400 })
-    }
+    const body = parsed.data
 
     const { data, error } = await supabaseAdmin
       .from('weekly_reflections')

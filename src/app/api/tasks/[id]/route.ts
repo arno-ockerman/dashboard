@@ -1,6 +1,7 @@
 import { NextResponse , NextRequest } from 'next/server'
 import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { taskUpdateSchema } from '@/lib/validators'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,11 +13,15 @@ export async function PATCH(
   if (!auth.authorized) return auth.response!
   try {
     const body = await req.json()
+    const parsed = taskUpdateSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    }
     const { id } = params
 
     const { data, error } = await supabaseAdmin
       .from('tasks')
-      .update({ ...body, updated_at: new Date().toISOString() })
+      .update({ ...parsed.data, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single()

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { clientSchema } from '@/lib/validators'
 
 export async function GET(request: NextRequest) {
   const auth = await withAuth(request)
@@ -37,9 +38,13 @@ export async function POST(request: NextRequest) {
   if (!auth.authorized) return auth.response!
   try {
     const body = await request.json()
+    const parsed = clientSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    }
     const { data, error } = await supabaseAdmin
       .from('clients')
-      .insert(body)
+      .insert(parsed.data)
       .select()
       .single()
 
