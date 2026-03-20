@@ -524,14 +524,53 @@ export default function DashboardPage() {
   }, [])
 
   const toggleHabit = async (habitId: string, completed: boolean) => {
+    const newCompleted = !completed
+    // Optimistic UI: update only the specific habit — NO fetchData() / no page reload
+    setData((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        habits: prev.habits.map((h) =>
+          h.id === habitId
+            ? {
+                ...h,
+                completed_today: newCompleted,
+                streak: newCompleted ? h.streak + 1 : Math.max(0, h.streak - 1),
+              }
+            : h
+        ),
+      }
+    })
     setTogglingHabit(habitId)
     try {
-      await fetch(`/api/habits/${habitId}/check`, {
+      const res = await fetch(`/api/habits/${habitId}/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: !completed }),
+        body: JSON.stringify({ completed: newCompleted }),
       })
-      await fetchData()
+      if (!res.ok) {
+        // Revert on error
+        setData((prev) => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            habits: prev.habits.map((h) =>
+              h.id === habitId ? { ...h, completed_today: completed } : h
+            ),
+          }
+        })
+      }
+    } catch {
+      // Revert on network error
+      setData((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          habits: prev.habits.map((h) =>
+            h.id === habitId ? { ...h, completed_today: completed } : h
+          ),
+        }
+      })
     } finally {
       setTogglingHabit(null)
     }

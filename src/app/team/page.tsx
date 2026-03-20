@@ -25,7 +25,7 @@ const AGENTS = [
   {
     name: 'Mike',
     emoji: '⚡',
-    role: 'Senior Developer',
+    role: 'Web Developer',
     model: 'GPT Codex 5.3',
     color: 'blue',
     bgClass: 'bg-blue-900/20 border-blue-700/40',
@@ -33,9 +33,19 @@ const AGENTS = [
     dotClass: 'bg-blue-400',
   },
   {
+    name: 'Max',
+    emoji: '📱',
+    role: 'Mobile Developer',
+    model: 'GPT Codex 5.3',
+    color: 'cyan',
+    bgClass: 'bg-cyan-900/20 border-cyan-700/40',
+    textClass: 'text-cyan-400',
+    dotClass: 'bg-cyan-400',
+  },
+  {
     name: 'Kate',
     emoji: '✍️',
-    role: 'Content & Creative',
+    role: 'Content & Marketing',
     model: 'Claude Opus 4.6',
     color: 'purple',
     bgClass: 'bg-purple-900/20 border-purple-700/40',
@@ -43,9 +53,29 @@ const AGENTS = [
     dotClass: 'bg-purple-400',
   },
   {
+    name: 'Lisa',
+    emoji: '🔑',
+    role: 'App Store Optimizer',
+    model: 'Claude Opus 4.6',
+    color: 'pink',
+    bgClass: 'bg-pink-900/20 border-pink-700/40',
+    textClass: 'text-pink-400',
+    dotClass: 'bg-pink-400',
+  },
+  {
+    name: 'Alex',
+    emoji: '📈',
+    role: 'Growth & Research',
+    model: 'Gemini 2.5 Pro',
+    color: 'amber',
+    bgClass: 'bg-amber-900/20 border-amber-700/40',
+    textClass: 'text-amber-400',
+    dotClass: 'bg-amber-400',
+  },
+  {
     name: 'Steve',
-    emoji: '🔍',
-    role: 'Research & Analysis',
+    emoji: '🎨',
+    role: 'Dashboard & UI/UX',
     model: 'Gemini 3.1 Pro',
     color: 'green',
     bgClass: 'bg-brand-green/20 border-brand-green/40',
@@ -53,14 +83,14 @@ const AGENTS = [
     dotClass: 'bg-emerald-400',
   },
   {
-    name: 'Alex',
-    emoji: '📈',
-    role: 'Growth & Strategy',
-    model: 'Gemini 2.5 Pro',
-    color: 'amber',
-    bgClass: 'bg-amber-900/20 border-amber-700/40',
-    textClass: 'text-amber-400',
-    dotClass: 'bg-amber-400',
+    name: 'Sam',
+    emoji: '🛡️',
+    role: 'Security Auditor',
+    model: 'Claude Sonnet 4.6',
+    color: 'red',
+    bgClass: 'bg-red-900/20 border-red-700/40',
+    textClass: 'text-red-400',
+    dotClass: 'bg-red-400',
   },
 ]
 
@@ -360,7 +390,7 @@ export default function TeamPage() {
       </div>
 
       {/* Agent Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
         {AGENTS.map((agent) => (
           <AgentCard
             key={agent.name}

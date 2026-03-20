@@ -172,17 +172,51 @@ export default function GoalsPage() {
   }
 
   const toggleHabit = async (habitId: string, completed: boolean) => {
+    const newCompleted = !completed
+    // Optimistic UI: update state immediately — no page reload / loading flash
+    setHabits((prev) =>
+      prev.map((h) =>
+        h.id === habitId
+          ? {
+              ...h,
+              completed_today: newCompleted,
+              streak: newCompleted ? h.streak + 1 : Math.max(0, h.streak - 1),
+            }
+          : h
+      )
+    )
     setTogglingHabit(habitId)
     try {
-      await fetch(`/api/habits/${habitId}/check`, {
+      const res = await fetch(`/api/habits/${habitId}/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: !completed }),
+        body: JSON.stringify({ completed: newCompleted }),
       })
-      await fetchData()
-      if (showAnalytics) {
+      if (!res.ok) {
+        // Revert on error
+        setHabits((prev) =>
+          prev.map((h) =>
+            h.id === habitId
+              ? {
+                  ...h,
+                  completed_today: completed,
+                  streak: completed ? h.streak + 1 : Math.max(0, h.streak - 1),
+                }
+              : h
+          )
+        )
+      } else if (showAnalytics) {
         await fetchHistoryData()
       }
+    } catch {
+      // Revert on network error
+      setHabits((prev) =>
+        prev.map((h) =>
+          h.id === habitId
+            ? { ...h, completed_today: completed }
+            : h
+        )
+      )
     } finally {
       setTogglingHabit(null)
     }

@@ -10,14 +10,17 @@ import type { Task, TaskStatus, TaskPriority } from '@/types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const AGENTS = ['Jarvis', 'Mike', 'Kate', 'Steve', 'Alex']
+const AGENTS = ['Jarvis', 'Mike', 'Max', 'Kate', 'Lisa', 'Alex', 'Steve', 'Sam']
 
 const AGENT_EMOJIS: Record<string, string> = {
   Jarvis: '🧠',
   Mike: '⚡',
+  Max: '📱',
   Kate: '✍️',
-  Steve: '🔍',
+  Lisa: '🔑',
   Alex: '📈',
+  Steve: '🎨',
+  Sam: '🛡️',
 }
 
 const PRIORITY_CONFIG = {

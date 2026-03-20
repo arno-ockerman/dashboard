@@ -239,7 +239,8 @@ async function readJsonlUsage(period: Period) {
 
           const inputTokens = parseNumericValue(parsed.usage.input_tokens)
           const outputTokens = parseNumericValue(parsed.usage.output_tokens)
-          const totalTokens = parseNumericValue(parsed.usage.total_tokens) || inputTokens + outputTokens
+          // Use input+output as real total (total_tokens in JSONL can be the context window size)
+          const totalTokens = inputTokens + outputTokens || parseNumericValue(parsed.usage.total_tokens)
           const provider = normalizeProvider(
             typeof parsed.provider === 'string' ? parsed.provider : null,
             parsed.model

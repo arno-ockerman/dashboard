@@ -135,6 +135,7 @@ export default function DailyBriefPage() {
   const [data, setData] = useState<BriefData | null>(null)
   const [loading, setLoading] = useState(true)
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
+  const [togglingHabit, setTogglingHabit] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -147,6 +148,56 @@ export default function DailyBriefPage() {
       setLoading(false)
     }
   }, [])
+
+  const toggleHabit = async (habitId: string, completed: boolean) => {
+    const newCompleted = !completed
+    // Optimistic UI update — no page reload
+    setData((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        habits: {
+          ...prev.habits,
+          items: prev.habits.items.map((h) =>
+            h.id === habitId ? { ...h, completed: newCompleted } : h
+          ),
+          done: prev.habits.items.filter((h) =>
+            h.id === habitId ? newCompleted : h.completed
+          ).length,
+        },
+      }
+    })
+    setTogglingHabit(habitId)
+    try {
+      const res = await fetch(`/api/habits/${habitId}/check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: newCompleted }),
+      })
+      if (!res.ok) {
+        // Revert
+        setData((prev) => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            habits: {
+              ...prev.habits,
+              items: prev.habits.items.map((h) =>
+                h.id === habitId ? { ...h, completed } : h
+              ),
+              done: prev.habits.items.filter((h) =>
+                h.id === habitId ? completed : h.completed
+              ).length,
+            },
+          }
+        })
+      }
+    } catch {
+      // silent revert
+    } finally {
+      setTogglingHabit(null)
+    }
+  }
 
   useEffect(() => {
     load()
@@ -327,13 +378,15 @@ export default function DailyBriefPage() {
           ) : (
             <div className="space-y-2">
               {habitsAll.map((h) => (
-                <div
+                <button
                   key={h.id}
-                  className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all ${
+                  onClick={() => toggleHabit(h.id, h.completed)}
+                  disabled={togglingHabit === h.id}
+                  className={`w-full flex items-center gap-3 p-2.5 rounded-lg border transition-all text-left active:scale-[0.99] touch-manipulation ${
                     h.completed
                       ? 'bg-green-950/20 border-green-900/30'
-                      : 'bg-zinc-800/30 border-zinc-700/30'
-                  }`}
+                      : 'bg-zinc-800/30 border-zinc-700/30 hover:bg-zinc-800/50'
+                  } ${togglingHabit === h.id ? 'opacity-60' : ''}`}
                 >
                   <span className="text-base w-5 text-center flex-shrink-0">
                     {h.icon ?? '🎯'}
@@ -346,7 +399,7 @@ export default function DailyBriefPage() {
                   ) : (
                     <Circle className="w-4 h-4 text-zinc-600 flex-shrink-0" />
                   )}
-                </div>
+                </button>
               ))}
 
               {/* Progress bar */}
