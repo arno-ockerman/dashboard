@@ -32,6 +32,7 @@ function legacyRowToContentPost(row: any) {
     id: row.id,
     title: row.title,
     caption: row.caption ?? null,
+    body: row.description ?? null,
     platform,
     post_type: postType,
     media_url: row.media_url ?? null,

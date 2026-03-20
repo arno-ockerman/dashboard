@@ -162,3 +162,14 @@ CREATE TABLE IF NOT EXISTS daily_focus (
   updated_at timestamptz default now(),
   unique(user_id, date)
 );
+
+-- Client Checklists
+CREATE TABLE IF NOT EXISTS client_checklists (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+  task TEXT NOT NULL,
+  completed BOOLEAN DEFAULT FALSE,
+  position INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);

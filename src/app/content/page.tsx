@@ -6,12 +6,14 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   Calendar, Plus, X, ChevronLeft, ChevronRight, Filter,
   Image as ImageIcon, Trash2, Edit2, RefreshCw, Grid, List,
+  Eye, FileText, CheckCircle
 } from 'lucide-react'
 import {
   format, startOfWeek, endOfWeek, addDays, addWeeks, subWeeks,
   isSameDay, parseISO, isToday, startOfMonth, endOfMonth, eachDayOfInterval,
   addMonths, subMonths, isSameMonth,
 } from 'date-fns'
+import ReactMarkdown from 'react-markdown'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,6 +25,7 @@ interface ContentPost {
   id: string
   title: string
   caption: string | null
+  body: string | null
   platform: Platform
   post_type: PostType
   media_url: string | null
@@ -61,6 +64,7 @@ const STATUS_CONFIG: Record<PostStatus, { label: string; color: string; bg: stri
 const defaultForm = {
   title: '',
   caption: '',
+  body: '',
   platform: 'instagram' as Platform,
   post_type: 'post' as PostType,
   media_url: '',
@@ -78,6 +82,124 @@ function getPlatform(p: string) {
 
 function getPostType(t: string) {
   return POST_TYPES.find((x) => x.value === t) || POST_TYPES[0]
+}
+
+// ─── Post Details View ────────────────────────────────────────────────────────
+
+function PostDetailsView({ post, onEdit, onAdvance }: { 
+  post: ContentPost
+  onEdit: () => void
+  onAdvance: () => void
+}) {
+  const plat = getPlatform(post.platform)
+  const ptype = getPostType(post.post_type)
+  const status = STATUS_CONFIG[post.status]
+
+  return (
+    <div className="space-y-6">
+      {/* Header Info */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className={`badge ${plat.bg} ${plat.color} flex items-center gap-1.5 px-3 py-1`}>
+          <span>{plat.icon}</span>
+          <span className="font-semibold">{plat.label}</span>
+        </div>
+        <div className="badge bg-zinc-800 text-zinc-300 flex items-center gap-1.5 px-3 py-1">
+          <span>{ptype.icon}</span>
+          <span>{ptype.label}</span>
+        </div>
+        <div className={`badge ${status.bg} ${status.color} border ${status.border} px-3 py-1`}>
+          {status.label}
+        </div>
+        {post.scheduled_date && (
+          <div className="text-sm text-zinc-500 ml-auto">
+            📅 {format(parseISO(post.scheduled_date), 'EEEE d MMMM yyyy')}
+          </div>
+        )}
+      </div>
+
+      {/* Media Preview if exists */}
+      {post.media_url && (
+        <div className="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-video max-h-64 flex items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={post.media_url} alt="Media" className="w-full h-full object-contain" />
+        </div>
+      )}
+
+      {/* Main Content Area */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-6">
+          {/* Detailed Description / Body */}
+          <div className="card bg-zinc-900/40 border-zinc-800/50 p-6">
+            <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <FileText className="w-3 h-3" />
+              Volledige Beschrijving & Plan
+            </h3>
+            <div className="prose prose-invert prose-sm max-w-none prose-pre:bg-zinc-800/50 prose-pre:border prose-pre:border-zinc-700/50">
+              {post.body ? (
+                <ReactMarkdown>{post.body}</ReactMarkdown>
+              ) : (
+                <p className="text-zinc-600 italic">Geen gedetailleerde beschrijving beschikbaar.</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {/* Caption / Text */}
+          <div className="card bg-brand-burgundy/5 border-brand-burgundy/10 p-5">
+            <h3 className="text-xs font-bold text-brand-burgundy uppercase tracking-widest mb-3">
+              Copy-Paste Caption
+            </h3>
+            <div className="bg-zinc-900/80 rounded-lg p-4 border border-zinc-800 text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed font-mono">
+              {post.caption || "Geen caption tekst."}
+            </div>
+            {post.caption && (
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(post.caption!)
+                  alert('Caption gekopieerd! 📋')
+                }}
+                className="mt-3 w-full btn-secondary text-xs py-2"
+              >
+                Kopieer tekst
+              </button>
+            )}
+          </div>
+
+          {/* Tags */}
+          {post.tags && post.tags.length > 0 && (
+            <div className="card bg-zinc-900/40 border-zinc-800/50 p-5">
+              <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Tags</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {post.tags.map(t => (
+                  <span key={t} className="badge bg-zinc-800 text-zinc-400 text-[10px]">{t}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Metadata */}
+          <div className="text-[10px] text-zinc-600 space-y-1 px-1">
+            <p>Toegewezen aan: <span className="text-zinc-400">{post.assigned_to === 'kate' ? '✍️ Kate' : post.assigned_to}</span></p>
+            <p>Gemaakt op: {format(parseISO(post.created_at), 'd MMM yyyy HH:mm')}</p>
+            <p>Laatst bijgewerkt: {format(parseISO(post.updated_at), 'd MMM yyyy HH:mm')}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Bar */}
+      <div className="flex gap-3 pt-6 border-t border-zinc-800">
+        <button onClick={onEdit} className="btn-secondary flex-1 justify-center gap-2">
+          <Edit2 className="w-4 h-4" /> Aanpassen
+        </button>
+        {status.next && (
+          <button onClick={onAdvance} className="btn-primary flex-1 justify-center gap-2">
+            <CheckCircle className="w-4 h-4" /> Volgende stap: {STATUS_CONFIG[status.next].label}
+          </button>
+        )}
+      </div>
+    </div>
+  )
 }
 
 // ─── Tag Input ────────────────────────────────────────────────────────────────
@@ -220,6 +342,8 @@ function PostModal({
   onAdvance,
   saving,
   editMode,
+  viewMode,
+  setViewMode,
 }: {
   post: ContentPost | null
   form: typeof defaultForm
@@ -229,155 +353,175 @@ function PostModal({
   onAdvance: () => void
   saving: boolean
   editMode: boolean
+  viewMode: boolean
+  setViewMode: (v: boolean) => void
 }) {
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-content max-w-xl">
+      <div className={`modal-content ${viewMode ? 'max-w-4xl h-[90vh] overflow-y-auto' : 'max-w-xl'}`}>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">{editMode && post ? 'Post Bewerken' : 'Content Plannen'}</h2>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white"><X className="w-5 h-5" /></button>
-        </div>
-
-        {editMode && post && (
-          <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-zinc-800">
-            <span className={`badge ${STATUS_CONFIG[post.status].bg} ${STATUS_CONFIG[post.status].color}`}>
-              {STATUS_CONFIG[post.status].label}
-            </span>
-            {STATUS_CONFIG[post.status].next && (
-              <button onClick={onAdvance} className="text-xs text-brand-burgundy hover:underline ml-auto">
-                → {STATUS_CONFIG[STATUS_CONFIG[post.status].next!].label}
+          <h2 className="text-xl font-bold text-white">
+            {viewMode && post ? (
+              <span className="flex items-center gap-2">
+                <Eye className="w-5 h-5 text-brand-burgundy" /> 
+                {post.title}
+              </span>
+            ) : editMode && post ? 'Post Bewerken' : 'Content Plannen'}
+          </h2>
+          <div className="flex items-center gap-4">
+            {post && viewMode && (
+              <button 
+                onClick={() => setViewMode(false)}
+                className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 transition-colors"
+              >
+                <Edit2 className="w-3.5 h-3.5" /> Bewerk mode
               </button>
             )}
+            <button onClick={onClose} className="text-zinc-500 hover:text-white"><X className="w-5 h-5" /></button>
           </div>
-        )}
+        </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Titel *</label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => onChange({ ...form, title: e.target.value })}
-              placeholder="Content titel of onderwerp"
-              className="input"
-              autoFocus
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+        {viewMode && post ? (
+          <PostDetailsView 
+            post={post} 
+            onEdit={() => setViewMode(false)}
+            onAdvance={onAdvance}
+          />
+        ) : (
+          <div className="space-y-4">
+            {/* ... form content ... */}
             <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">Platform</label>
-              <select
-                value={form.platform}
-                onChange={(e) => onChange({ ...form, platform: e.target.value as Platform })}
-                className="select"
-              >
-                {PLATFORMS.map((p) => (
-                  <option key={p.value} value={p.value}>{p.icon} {p.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">Type</label>
-              <select
-                value={form.post_type}
-                onChange={(e) => onChange({ ...form, post_type: e.target.value as PostType })}
-                className="select"
-              >
-                {POST_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">Status</label>
-              <select
-                value={form.status}
-                onChange={(e) => onChange({ ...form, status: e.target.value as PostStatus })}
-                className="select"
-              >
-                {(Object.entries(STATUS_CONFIG) as [PostStatus, (typeof STATUS_CONFIG)[PostStatus]][]).map(([k, v]) => (
-                  <option key={k} value={k}>{v.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">Geplande Datum</label>
+              <label className="block text-xs text-zinc-400 mb-1.5">Titel *</label>
               <input
-                type="date"
-                value={form.scheduled_date}
-                onChange={(e) => onChange({ ...form, scheduled_date: e.target.value })}
+                type="text"
+                value={form.title}
+                onChange={(e) => onChange({ ...form, title: e.target.value })}
+                placeholder="Content titel of onderwerp"
+                className="input"
+                autoFocus
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1.5">Platform</label>
+                <select
+                  value={form.platform}
+                  onChange={(e) => onChange({ ...form, platform: e.target.value as Platform })}
+                  className="select"
+                >
+                  {PLATFORMS.map((p) => (
+                    <option key={p.value} value={p.value}>{p.icon} {p.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1.5">Type</label>
+                <select
+                  value={form.post_type}
+                  onChange={(e) => onChange({ ...form, post_type: e.target.value as PostType })}
+                  className="select"
+                >
+                  {POST_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1.5">Status</label>
+                <select
+                  value={form.status}
+                  onChange={(e) => onChange({ ...form, status: e.target.value as PostStatus })}
+                  className="select"
+                >
+                  {(Object.entries(STATUS_CONFIG) as [PostStatus, (typeof STATUS_CONFIG)[PostStatus]][]).map(([k, v]) => (
+                    <option key={k} value={k}>{v.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1.5">Geplande Datum</label>
+                <input
+                  type="date"
+                  value={form.scheduled_date}
+                  onChange={(e) => onChange({ ...form, scheduled_date: e.target.value })}
+                  className="input"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1.5">Caption (Instagram/Social Text)</label>
+              <textarea
+                value={form.caption}
+                onChange={(e) => onChange({ ...form, caption: e.target.value })}
+                placeholder="Post tekst met hashtags... (Nederlands)"
+                rows={4}
+                className="input resize-none font-mono text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1.5">Detailed Description / Body (Markdown supported)</label>
+              <textarea
+                value={form.body}
+                onChange={(e) => onChange({ ...form, body: e.target.value })}
+                placeholder="Volledige Reel script, story plan, en andere details... (Markdown ondersteund)"
+                rows={6}
+                className="input resize-none text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1.5">
+                <ImageIcon className="w-3 h-3 inline mr-1" />
+                Media URL (optioneel)
+              </label>
+              <input
+                type="url"
+                value={form.media_url}
+                onChange={(e) => onChange({ ...form, media_url: e.target.value })}
+                placeholder="https://..."
                 className="input"
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Caption (NL)</label>
-            <textarea
-              value={form.caption}
-              onChange={(e) => onChange({ ...form, caption: e.target.value })}
-              placeholder="Post tekst met hashtags... (Nederlands)"
-              rows={4}
-              className="input resize-none"
-            />
-          </div>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1.5">Tags</label>
+              <TagInput
+                tags={form.tags}
+                onChange={(t) => onChange({ ...form, tags: t })}
+              />
+            </div>
 
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">
-              <ImageIcon className="w-3 h-3 inline mr-1" />
-              Media URL (optioneel)
-            </label>
-            <input
-              type="url"
-              value={form.media_url}
-              onChange={(e) => onChange({ ...form, media_url: e.target.value })}
-              placeholder="https://..."
-              className="input"
-            />
-            {form.media_url && (
-              <div className="mt-2 rounded-lg overflow-hidden h-24 bg-zinc-800">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={form.media_url} alt="preview" className="w-full h-full object-cover" />
-              </div>
-            )}
-          </div>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1.5">Toegewezen aan</label>
+              <select
+                value={form.assigned_to}
+                onChange={(e) => onChange({ ...form, assigned_to: e.target.value })}
+                className="select"
+              >
+                <option value="kate">✍️ Kate (Content Agent)</option>
+                <option value="arno">👤 Arno</option>
+                <option value="jarvis">🧠 Jarvis</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Tags</label>
-            <TagInput
-              tags={form.tags}
-              onChange={(t) => onChange({ ...form, tags: t })}
-            />
+            <div className="flex gap-3 pt-4 border-t border-zinc-800">
+              <button onClick={onClose} className="btn-secondary flex-1 justify-center">Annuleren</button>
+              <button
+                onClick={onSave}
+                disabled={!form.title || saving}
+                className="btn-primary flex-1 justify-center"
+              >
+                {saving ? 'Opslaan...' : editMode ? 'Bijwerken' : 'Plannen'}
+              </button>
+            </div>
           </div>
-
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1.5">Toegewezen aan</label>
-            <select
-              value={form.assigned_to}
-              onChange={(e) => onChange({ ...form, assigned_to: e.target.value })}
-              className="select"
-            >
-              <option value="kate">✍️ Kate (Content Agent)</option>
-              <option value="arno">👤 Arno</option>
-              <option value="jarvis">🧠 Jarvis</option>
-            </select>
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button onClick={onClose} className="btn-secondary flex-1 justify-center">Annuleren</button>
-            <button
-              onClick={onSave}
-              disabled={!form.title || saving}
-              className="btn-primary flex-1 justify-center"
-            >
-              {saving ? 'Opslaan...' : editMode ? 'Bijwerken' : 'Plannen'}
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   )
@@ -389,10 +533,11 @@ export default function ContentPage() {
   const [posts, setPosts] = useState<ContentPost[]>([])
   const [backlog, setBacklog] = useState<ContentPost[]>([])
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('week')
+  const [viewModeType, setViewModeType] = useState<'week' | 'month'>('week')
   const [weekOffset, setWeekOffset] = useState(0)
   const [monthOffset, setMonthOffset] = useState(0)
   const [showModal, setShowModal] = useState(false)
+  const [viewMode, setViewMode] = useState(false)
   const [form, setForm] = useState<typeof defaultForm>({ ...defaultForm })
   const [saving, setSaving] = useState(false)
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null)
@@ -416,7 +561,7 @@ export default function ContentPage() {
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      if (viewMode === 'week') {
+      if (viewModeType === 'week') {
         params.set('week_start', format(weekStart, 'yyyy-MM-dd'))
         params.set('week_end', format(weekEnd, 'yyyy-MM-dd'))
       } else {
@@ -439,7 +584,7 @@ export default function ContentPage() {
     } finally {
       setLoading(false)
     }
-  }, [viewMode, weekOffset, monthOffset, filterPlatform, filterStatus])
+  }, [viewModeType, weekOffset, monthOffset, filterPlatform, filterStatus])
 
   useEffect(() => { fetchPosts() }, [fetchPosts])
 
@@ -452,6 +597,7 @@ export default function ContentPage() {
       ...defaultForm,
       scheduled_date: date || new Date().toISOString().split('T')[0],
     })
+    setViewMode(false)
     setShowModal(true)
   }
 
@@ -460,6 +606,7 @@ export default function ContentPage() {
     setForm({
       title: post.title,
       caption: post.caption || '',
+      body: post.body || '',
       platform: post.platform,
       post_type: post.post_type,
       media_url: post.media_url || '',
@@ -468,6 +615,7 @@ export default function ContentPage() {
       assigned_to: post.assigned_to,
       tags: post.tags || [],
     })
+    setViewMode(true)
     setShowModal(true)
   }
 
@@ -479,6 +627,7 @@ export default function ContentPage() {
         ...form,
         media_url: form.media_url || null,
         caption: form.caption || null,
+        body: form.body || null,
         tags: form.tags.length > 0 ? form.tags : null,
       }
 
@@ -563,14 +712,14 @@ export default function ContentPage() {
           {/* View mode toggle */}
           <div className="flex bg-zinc-800 rounded-lg p-1">
             <button
-              onClick={() => setViewMode('week')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${viewMode === 'week' ? 'bg-brand-burgundy text-white' : 'text-zinc-400 hover:text-white'}`}
+              onClick={() => setViewModeType('week')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${viewModeType === 'week' ? 'bg-brand-burgundy text-white' : 'text-zinc-400 hover:text-white'}`}
             >
               Week
             </button>
             <button
-              onClick={() => setViewMode('month')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${viewMode === 'month' ? 'bg-brand-burgundy text-white' : 'text-zinc-400 hover:text-white'}`}
+              onClick={() => setViewModeType('month')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${viewModeType === 'month' ? 'bg-brand-burgundy text-white' : 'text-zinc-400 hover:text-white'}`}
             >
               Maand
             </button>
@@ -579,7 +728,7 @@ export default function ContentPage() {
           {/* Navigation */}
           <div className="flex items-center gap-1">
             <button
-              onClick={() => viewMode === 'week' ? setWeekOffset((o) => o - 1) : setMonthOffset((o) => o - 1)}
+              onClick={() => viewModeType === 'week' ? setWeekOffset((o) => o - 1) : setMonthOffset((o) => o - 1)}
               className="btn-ghost p-2"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -591,7 +740,7 @@ export default function ContentPage() {
               Vandaag
             </button>
             <button
-              onClick={() => viewMode === 'week' ? setWeekOffset((o) => o + 1) : setMonthOffset((o) => o + 1)}
+              onClick={() => viewModeType === 'week' ? setWeekOffset((o) => o + 1) : setMonthOffset((o) => o + 1)}
               className="btn-ghost p-2"
             >
               <ChevronRight className="w-4 h-4" />
@@ -700,7 +849,7 @@ export default function ContentPage() {
       </div>
 
       {/* Calendar: Week View */}
-      {viewMode === 'week' && (
+      {viewModeType === 'week' && (
         <div className="hidden lg:grid grid-cols-7 gap-2 mb-8">
           {weekDays.map((day) => {
             const dayPosts = getPostsForDay(day)
@@ -737,7 +886,7 @@ export default function ContentPage() {
       )}
 
       {/* Calendar: Month View */}
-      {viewMode === 'month' && (
+      {viewModeType === 'month' && (
         <div className="hidden lg:block card mb-8 overflow-hidden p-4">
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-2">
@@ -825,6 +974,8 @@ export default function ContentPage() {
           onAdvance={advanceStatus}
           saving={saving}
           editMode={!!selectedPost}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
         />
       )}
     </div>

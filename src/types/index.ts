@@ -220,3 +220,15 @@ export interface MeasurementsListResponse {
   total: number
   clients: string[]
 }
+
+// ─── Client Checklists ───────────────────────────────────────────────────────
+
+export interface ClientChecklistItem {
+  id: string
+  client_id: string
+  task: string
+  completed: boolean
+  position: number
+  created_at: string
+  updated_at: string
+}

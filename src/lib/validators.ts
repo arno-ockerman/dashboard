@@ -155,3 +155,13 @@ export const focusSchema = z.object({
   duration: z.number().min(1).max(480).optional(),
   notes: optionalStr(2000),
 }).passthrough()
+
+// ─── Client Checklists ───────────────────────────────────────────────────────
+
+export const clientChecklistSchema = z.object({
+  task: trimmedStr(500),
+  completed: z.boolean().optional(),
+  position: z.number().optional(),
+}).passthrough()
+
+export const clientChecklistUpdateSchema = clientChecklistSchema.partial()

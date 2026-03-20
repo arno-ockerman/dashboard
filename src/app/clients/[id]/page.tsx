@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Phone, MessageSquare, Mail, Edit2, Save,
-  X, Plus, Trash2, Clock, UserCheck, AlertCircle,
+  X, Plus, Trash2, Clock, UserCheck, AlertCircle, CheckCircle2, Circle, ListChecks,
 } from 'lucide-react'
 import { format } from 'date-fns'
-import type { Client, Interaction, ClientStatus } from '@/types'
+import type { Client, Interaction, ClientStatus, ClientChecklistItem } from '@/types'
 
 const statusConfig: Record<ClientStatus, { label: string; color: string; bg: string }> = {
   lead: { label: 'Lead', color: 'text-zinc-300', bg: 'bg-zinc-700' },
@@ -26,6 +26,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
   const router = useRouter()
   const [client, setClient] = useState<Client | null>(null)
   const [interactions, setInteractions] = useState<Interaction[]>([])
+  const [checklist, setChecklist] = useState<ClientChecklistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState<Partial<Client>>({})
@@ -33,24 +34,87 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
   const [logForm, setLogForm] = useState({ type: 'message', notes: '' })
   const [logging, setLogging] = useState(false)
   const [showLogForm, setShowLogForm] = useState(false)
+  const [newChecklistItem, setNewChecklistItem] = useState('')
+  const [addingChecklistItem, setAddingChecklistItem] = useState(false)
 
   const fetchData = async () => {
     try {
-      const [cRes, iRes] = await Promise.all([
+      const [cRes, iRes, chRes] = await Promise.all([
         fetch(`/api/clients/${params.id}`),
         fetch(`/api/clients/${params.id}/interactions`),
+        fetch(`/api/clients/${params.id}/checklist`),
       ])
       const clientData = await cRes.json()
       const interactionsData = await iRes.json()
+      const checklistData = await chRes.json()
       setClient(clientData)
       setEditForm(clientData)
       setInteractions(interactionsData)
+      setChecklist(checklistData)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => { fetchData() }, [params.id])
+
+  const toggleChecklistItem = async (item: ClientChecklistItem) => {
+    try {
+      await fetch(`/api/clients/${params.id}/checklist/${item.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: !item.completed }),
+      })
+      fetchData()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const addChecklistItem = async (task: string) => {
+    if (!task.trim()) return
+    setAddingChecklistItem(true)
+    try {
+      await fetch(`/api/clients/${params.id}/checklist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task }),
+      })
+      setNewChecklistItem('')
+      fetchData()
+    } finally {
+      setAddingChecklistItem(false)
+    }
+  }
+
+  const removeChecklistItem = async (id: string) => {
+    try {
+      await fetch(`/api/clients/${params.id}/checklist/${id}`, {
+        method: 'DELETE',
+      })
+      fetchData()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const addStandardItems = async () => {
+    const items = [
+      'Intakeformulier verstuurd',
+      'Eerste scan ingepland',
+      'Voedingsplan gemaakt',
+      'Toegevoegd aan 21-Day Challenge',
+      'Welcome pack verstuurd',
+    ]
+    for (const item of items) {
+      await fetch(`/api/clients/${params.id}/checklist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task: item }),
+      })
+    }
+    fetchData()
+  }
 
   const saveClient = async () => {
     setSaving(true)
@@ -380,6 +444,74 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Checklist section */}
+      <div className="mt-8 mb-8">
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-white flex items-center gap-2">
+              <ListChecks className="w-4 h-4 text-brand-burgundy" /> Client Onboarding Checklist
+            </h2>
+            {checklist.length === 0 && (
+              <button
+                onClick={addStandardItems}
+                className="text-xs text-brand-burgundy hover:underline"
+              >
+                + Add standard items
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-2 mb-4">
+            {checklist.map((item) => (
+              <div key={item.id} className="flex items-center gap-3 group">
+                <button
+                  onClick={() => toggleChecklistItem(item)}
+                  className="focus:outline-none transition-colors"
+                >
+                  {item.completed ? (
+                    <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-zinc-600" />
+                  )}
+                </button>
+                <span className={`text-sm flex-1 ${item.completed ? 'text-zinc-500 line-through' : 'text-zinc-300'}`}>
+                  {item.task}
+                </span>
+                <button
+                  onClick={() => removeChecklistItem(item.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1 text-zinc-600 hover:text-red-400 transition-all"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+            {checklist.length === 0 && (
+              <p className="text-zinc-500 text-sm italic">No checklist items. Add one or use the standard items.</p>
+            )}
+          </div>
+
+          <form
+            onSubmit={(e) => { e.preventDefault(); addChecklistItem(newChecklistItem) }}
+            className="flex gap-2"
+          >
+            <input
+              type="text"
+              value={newChecklistItem}
+              onChange={(e) => setNewChecklistItem(e.target.value)}
+              placeholder="Add onboarding task..."
+              className="input text-sm py-1.5 flex-1"
+            />
+            <button
+              type="submit"
+              disabled={!newChecklistItem.trim() || addingChecklistItem}
+              className="btn-primary text-xs py-1.5 px-3"
+            >
+              <Plus className="w-3 h-3" /> Add
+            </button>
+          </form>
         </div>
       </div>
     </div>
