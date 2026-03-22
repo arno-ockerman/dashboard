@@ -6,7 +6,7 @@ import {
   DollarSign, Users, Bell, TrendingUp, Plus, ArrowRight,
   CheckCircle2, Circle, Flame, Target, Calendar, BookOpen,
   RefreshCw, UserPlus, Zap, Crosshair, Bot, ListTodo, Folder, Clock,
-  Settings, TrendingDown,
+  Settings, TrendingDown, Activity, Heart, Moon, Zap as ZapIcon,
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import type { Client, Goal, Habit, Sale, SalesStats, Task, Project, TeamActivity } from '@/types'
@@ -282,6 +282,81 @@ function ProjectStatusWidget() {
   )
 }
 
+// ─── Health Widget ────────────────────────────────────────────────────────────
+
+interface HealthData {
+  readiness_score: number | null
+  hrv_ms: number | null
+  sleep_total_hours: number | null
+  steps: number | null
+  date: string
+}
+
+function HealthSnapshotWidget({ data }: { data: HealthData | null }) {
+  if (!data) return (
+    <div className="card h-full flex flex-col items-center justify-center text-center py-6">
+      <Activity className="w-8 h-8 text-zinc-700 mb-2" />
+      <p className="text-zinc-500 text-sm">No health data today</p>
+      <Link href="/health" className="text-xs text-brand-burgundy hover:underline mt-2">Open Health</Link>
+    </div>
+  )
+
+  const readiness = data.readiness_score || 0
+  const readinessColor = readiness > 80 ? 'text-emerald-400' : readiness > 60 ? 'text-brand-amber' : 'text-brand-burgundy'
+
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-semibold text-white flex items-center gap-2">
+          <Activity className="w-4 h-4 text-brand-green" />
+          Health Snapshot
+        </h2>
+        <Link href="/health" className="text-xs text-zinc-500 hover:text-white flex items-center gap-1">
+          Health page <ArrowRight className="w-3 h-3" />
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-zinc-800/40 p-3 rounded-xl border border-zinc-800/50">
+          <div className="flex items-center gap-2 mb-1">
+            <ZapIcon className={`w-3.5 h-3.5 ${readinessColor}`} />
+            <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Readiness</span>
+          </div>
+          <p className={`text-2xl font-bold ${readinessColor}`}>{readiness}</p>
+        </div>
+
+        <div className="bg-zinc-800/40 p-3 rounded-xl border border-zinc-800/50">
+          <div className="flex items-center gap-2 mb-1">
+            <Heart className="w-3.5 h-3.5 text-rose-500" />
+            <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">HRV</span>
+          </div>
+          <p className="text-2xl font-bold text-white">{data.hrv_ms || '--'}<span className="text-xs font-normal text-zinc-500 ml-1">ms</span></p>
+        </div>
+
+        <div className="bg-zinc-800/40 p-3 rounded-xl border border-zinc-800/50">
+          <div className="flex items-center gap-2 mb-1">
+            <Moon className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Sleep</span>
+          </div>
+          <p className="text-2xl font-bold text-white">{data.sleep_total_hours?.toFixed(1) || '--'}<span className="text-xs font-normal text-zinc-500 ml-1">h</span></p>
+        </div>
+
+        <div className="bg-zinc-800/40 p-3 rounded-xl border border-zinc-800/50">
+          <div className="flex items-center gap-2 mb-1">
+            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Steps</span>
+          </div>
+          <p className="text-2xl font-bold text-white">{(data.steps || 0).toLocaleString()}</p>
+        </div>
+      </div>
+      
+      <p className="text-[10px] text-zinc-600 mt-4 text-center">
+        Last updated: {format(new Date(data.date), 'MMM d, HH:mm')}
+      </p>
+    </div>
+  )
+}
+
 // ─── Upcoming Content Widget ──────────────────────────────────────────────────
 
 interface ContentPost {
@@ -455,6 +530,7 @@ interface DashboardData {
   habits: Habit[]
   recent_sales: Sale[]
   recent_clients: Client[]
+  latest_health: HealthData | null
 }
 
 function StatCard({
@@ -667,9 +743,12 @@ export default function DashboardPage() {
             <p className="text-xs text-zinc-500 mt-2">{data?.sales_this_month || 0} sales logged this month</p>
           </div>
 
-          {/* Big 3 Widget */}
-          <div className="mb-6">
-            <Big3Widget />
+          {/* Top Grid: Big 3 + Health */}
+          <div className="grid lg:grid-cols-3 gap-6 mb-6">
+            <div className="lg:col-span-2">
+              <Big3Widget />
+            </div>
+            <HealthSnapshotWidget data={data?.latest_health || null} />
           </div>
 
           {/* AI Team Widgets */}
