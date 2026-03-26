@@ -28,6 +28,7 @@ import {
   Trophy,
   Ruler,
   Flame,
+  Dumbbell,
 } from 'lucide-react'
 import MissionControl from './MissionControl'
 
@@ -58,6 +59,7 @@ const NAV_SECTIONS = [
       { href: '/measurements', label: 'Metingen', icon: Ruler },
       { href: '/content', label: 'Content', icon: Calendar },
       { href: '/goals', label: 'Goals & Habits', icon: Target },
+      { href: '/training', label: 'Training Log', icon: Dumbbell },
       { href: '/health', label: 'Health & Recovery', icon: Heart },
       { href: '/review', label: 'Weekly Review', icon: Trophy },
       { href: '/insights', label: 'BI Council', icon: Lightbulb },

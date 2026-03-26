@@ -163,6 +163,19 @@ CREATE TABLE IF NOT EXISTS daily_focus (
   unique(user_id, date)
 );
 
+-- Training Logs
+CREATE TABLE IF NOT EXISTS training_logs (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  date date NOT NULL DEFAULT current_date,
+  workout_type text NOT NULL CHECK (workout_type IN ('push', 'pull', 'full_body', 'cardio', 'group', 'other')),
+  duration_min integer,
+  energy_level integer CHECK (energy_level BETWEEN 1 AND 5),
+  exercises jsonb DEFAULT '[]',
+  notes text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
 -- Client Checklists
 CREATE TABLE IF NOT EXISTS client_checklists (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
