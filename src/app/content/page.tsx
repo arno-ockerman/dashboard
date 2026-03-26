@@ -543,6 +543,8 @@ export default function ContentPage() {
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null)
   const [filterPlatform, setFilterPlatform] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [filterType, setFilterType] = useState<string>('all')
+  const [allPosts, setAllPosts] = useState<ContentPost[]>([])
 
   // Week view dates
   const weekStart = startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 })
@@ -571,14 +573,17 @@ export default function ContentPage() {
       if (filterPlatform !== 'all') params.set('platform', filterPlatform)
       if (filterStatus !== 'all') params.set('status', filterStatus)
 
-      const [calRes, backlogRes] = await Promise.all([
+      const [calRes, backlogRes, allRes] = await Promise.all([
         fetch(`/api/content-posts?${params}`),
         fetch('/api/content-posts?status=idea'),
+        fetch('/api/content-posts?limit=500'),
       ])
       const calData = await calRes.json()
       const backlogData = await backlogRes.json()
+      const allData = await allRes.json()
       setPosts(Array.isArray(calData) ? calData.filter((p: ContentPost) => p.scheduled_date) : [])
       setBacklog(Array.isArray(backlogData) ? backlogData.filter((p: ContentPost) => !p.scheduled_date) : [])
+      setAllPosts(Array.isArray(allData) ? allData : [])
     } catch (e) {
       console.error(e)
     } finally {
@@ -723,6 +728,12 @@ export default function ContentPage() {
             >
               Maand
             </button>
+            <button
+              onClick={() => setViewModeType('list' as 'week')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${ (viewModeType as string) === 'list' ? 'bg-brand-burgundy text-white' : 'text-zinc-400 hover:text-white'}`}
+            >
+              Lijst
+            </button>
           </div>
 
           {/* Navigation */}
@@ -768,7 +779,7 @@ export default function ContentPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-3">
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-zinc-500" />
           <span className="text-xs text-zinc-500">Platform:</span>
@@ -789,9 +800,30 @@ export default function ContentPage() {
           </button>
         ))}
       </div>
+      <div className="flex flex-wrap gap-3 mb-6">
+        <div className="flex items-center gap-2">
+          <Grid className="w-4 h-4 text-zinc-500" />
+          <span className="text-xs text-zinc-500">Type:</span>
+        </div>
+        <button
+          onClick={() => setFilterType('all')}
+          className={`badge cursor-pointer transition-colors ${filterType === 'all' ? 'bg-brand-burgundy text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}
+        >
+          Alle
+        </button>
+        {POST_TYPES.map((t) => (
+          <button
+            key={t.value}
+            onClick={() => setFilterType(filterType === t.value ? 'all' : t.value)}
+            className={`badge cursor-pointer transition-colors ${filterType === t.value ? 'bg-zinc-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}
+          >
+            {t.icon} {t.label}
+          </button>
+        ))}
+      </div>
 
       {/* Mobile list view (sorted by date) */}
-      <div className="lg:hidden card mb-6 p-4">
+      <div className={`${(viewModeType as string) === 'list' ? 'hidden' : ''} lg:hidden card mb-6 p-4`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <List className="w-4 h-4 text-zinc-500" />
@@ -849,7 +881,7 @@ export default function ContentPage() {
       </div>
 
       {/* Calendar: Week View */}
-      {viewModeType === 'week' && (
+      {(viewModeType as string) === 'week' && (
         <div className="hidden lg:grid grid-cols-7 gap-2 mb-8">
           {weekDays.map((day) => {
             const dayPosts = getPostsForDay(day)
@@ -886,7 +918,7 @@ export default function ContentPage() {
       )}
 
       {/* Calendar: Month View */}
-      {viewModeType === 'month' && (
+      {(viewModeType as string) === 'month' && (
         <div className="hidden lg:block card mb-8 overflow-hidden p-4">
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-2">
@@ -948,8 +980,88 @@ export default function ContentPage() {
         </div>
       )}
 
+      {/* List View — Alles */}
+      {(viewModeType as string) === 'list' && (
+        <div className="card mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-white flex items-center gap-2">
+              <List className="w-4 h-4 text-brand-burgundy" />
+              Alle Content
+              <span className="badge bg-zinc-800 text-zinc-400 ml-1">
+                {allPosts.filter(p =>
+                  (filterPlatform === 'all' || p.platform === filterPlatform) &&
+                  (filterStatus === 'all' || p.status === filterStatus) &&
+                  (filterType === 'all' || p.post_type === filterType)
+                ).length}
+              </span>
+            </h3>
+          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-8 text-zinc-600 text-sm">
+              <RefreshCw className="w-4 h-4 animate-spin mr-2" /> Loading...
+            </div>
+          ) : (
+            <div className="divide-y divide-zinc-800">
+              {allPosts
+                .filter(p =>
+                  (filterPlatform === 'all' || p.platform === filterPlatform) &&
+                  (filterStatus === 'all' || p.status === filterStatus) &&
+                  (filterType === 'all' || p.post_type === filterType)
+                )
+                .sort((a, b) => {
+                  if (!a.scheduled_date && !b.scheduled_date) return parseISO(b.created_at).getTime() - parseISO(a.created_at).getTime()
+                  if (!a.scheduled_date) return 1
+                  if (!b.scheduled_date) return -1
+                  return parseISO(b.scheduled_date).getTime() - parseISO(a.scheduled_date).getTime()
+                })
+                .map(post => {
+                  const plat = getPlatform(post.platform)
+                  const ptype = getPostType(post.post_type)
+                  const status = STATUS_CONFIG[post.status]
+                  return (
+                    <button
+                      key={post.id}
+                      onClick={() => openEdit(post)}
+                      className="w-full text-left flex items-center gap-4 py-3 px-2 hover:bg-zinc-800/40 transition-colors rounded-lg group"
+                    >
+                      <div className="w-8 text-center text-lg flex-shrink-0">{ptype.icon}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-white truncate">{post.title}</span>
+                          <span className={`badge text-[10px] ${status.bg} ${status.color} ${status.border} border`}>{status.label}</span>
+                        </div>
+                        {post.caption && (
+                          <p className="text-xs text-zinc-500 truncate mt-0.5">{post.caption.slice(0, 100)}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0 text-right">
+                        <span className={`text-xs ${plat.color}`}>{plat.icon}</span>
+                        {post.scheduled_date ? (
+                          <span className="text-xs text-zinc-500 hidden sm:block">
+                            {format(parseISO(post.scheduled_date), 'd MMM')}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-zinc-700 hidden sm:block">Geen datum</span>
+                        )}
+                        <Eye className="w-3.5 h-3.5 text-zinc-700 group-hover:text-zinc-400 transition-colors" />
+                      </div>
+                    </button>
+                  )
+                })}
+              {allPosts.filter(p =>
+                (filterPlatform === 'all' || p.platform === filterPlatform) &&
+                (filterStatus === 'all' || p.status === filterStatus) &&
+                (filterType === 'all' || p.post_type === filterType)
+              ).length === 0 && (
+                <p className="text-center text-zinc-600 text-sm py-8">Geen posts gevonden</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Backlog */}
-      <BacklogList posts={backlog} onSelect={openEdit} />
+      {(viewModeType as string) !== 'list' && <BacklogList posts={backlog} onSelect={openEdit} />}
 
       {/* Empty state */}
       {!loading && posts.length === 0 && backlog.length === 0 && (
