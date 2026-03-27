@@ -29,6 +29,7 @@ import {
   Ruler,
   Flame,
   Dumbbell,
+  Activity,
 } from 'lucide-react'
 import MissionControl from './MissionControl'
 
@@ -39,6 +40,7 @@ const NAV_SECTIONS = [
       { href: '/', label: 'Command Center', icon: LayoutDashboard },
       { href: '/brief', label: 'Daily Brief', icon: Sunrise },
       { href: '/focus', label: 'Big 3 Focus', icon: Crosshair },
+      { href: '/activity', label: 'Activity', icon: Activity },
     ],
   },
   {
