@@ -30,6 +30,7 @@ import {
   Flame,
   Dumbbell,
   Activity,
+  Search,
 } from 'lucide-react'
 import MissionControl from './MissionControl'
 
@@ -138,6 +139,18 @@ export default function Sidebar() {
             <div className="text-brand-stardust text-xs mt-0.5 tracking-wider">REDEFINE LIMITS</div>
           </div>
         </div>
+      </div>
+
+      {/* Command Palette trigger */}
+      <div className="px-4 pt-4">
+        <button
+          onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-zinc-800/50 border border-zinc-700/50 text-zinc-400 hover:text-white hover:border-zinc-600 transition-all text-sm"
+        >
+          <Search className="w-4 h-4 flex-shrink-0" />
+          <span className="flex-1 text-left">Search…</span>
+          <kbd className="hidden sm:inline-flex text-[10px] text-zinc-500 bg-zinc-800 border border-zinc-700 rounded px-1.5 py-0.5 font-mono">⌘K</kbd>
+        </button>
       </div>
 
       {/* Nav links */}
