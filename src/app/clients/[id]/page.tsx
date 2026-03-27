@@ -1,14 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Phone, MessageSquare, Mail, Edit2, Save,
   X, Plus, Trash2, Clock, UserCheck, AlertCircle, CheckCircle2, Circle, ListChecks,
+  Ruler, TrendingDown, TrendingUp, Minus, ArrowRight,
 } from 'lucide-react'
 import { format } from 'date-fns'
-import type { Client, Interaction, ClientStatus, ClientChecklistItem } from '@/types'
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts'
+import type { Client, Interaction, ClientStatus, ClientChecklistItem, Measurement } from '@/types'
 
 const statusConfig: Record<ClientStatus, { label: string; color: string; bg: string }> = {
   lead: { label: 'Lead', color: 'text-zinc-300', bg: 'bg-zinc-700' },
@@ -20,6 +24,101 @@ const statusConfig: Record<ClientStatus, { label: string; color: string; bg: str
 
 const interactionTypeIcons: Record<string, string> = {
   call: '📞', message: '💬', meeting: '🤝', email: '✉️', social: '📱', other: '📝',
+}
+
+// ─── Progress Components ─────────────────────────────────────────────────────
+
+function ProgressStat({ label, value, unit, invert = false }: { label: string; value: number | null; unit: string; invert?: boolean }) {
+  if (value === null) return null
+  const isPositive = invert ? value < 0 : value > 0
+  const isNegative = invert ? value > 0 : value < 0
+  const color = isPositive ? 'text-green-400' : isNegative ? 'text-red-400' : 'text-zinc-500'
+  const Icon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus
+  
+  return (
+    <div className="bg-zinc-800/40 border border-zinc-700/50 rounded-xl p-3">
+      <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">{label}</p>
+      <div className="flex items-center gap-1.5">
+        <Icon className={`w-3.5 h-3.5 ${color}`} />
+        <span className={`text-sm font-bold ${color}`}>
+          {value > 0 ? '+' : ''}{value.toFixed(1)} {unit}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function MeasurementsSection({ clientName }: { clientName: string }) {
+  const [measurements, setMeasurements] = useState<Measurement[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`/api/measurements?clientName=${encodeURIComponent(clientName)}&limit=10`)
+      .then(r => r.json())
+      .then(data => {
+        setMeasurements(data.measurements || [])
+      })
+      .finally(() => setLoading(false))
+  }, [clientName])
+
+  if (loading) return <div className="skeleton h-32 rounded-xl" />
+  
+  if (measurements.length === 0) {
+    return (
+      <div className="card border-dashed border-zinc-800 bg-transparent flex flex-col items-center justify-center py-8 text-center">
+        <Ruler className="w-8 h-8 text-zinc-800 mb-2" />
+        <p className="text-sm text-zinc-600">Geen metingen gevonden voor {clientName}</p>
+        <Link href="/measurements" className="text-xs text-brand-burgundy hover:underline mt-2">
+          + Eerste meting toevoegen
+        </Link>
+      </div>
+    )
+  }
+
+  const sorted = [...measurements].sort((a, b) => a.date.localeCompare(b.date))
+  const first = sorted[0]
+  const latest = sorted[sorted.length - 1]
+  
+  const weightDiff = (latest.weight_kg && first.weight_kg) ? (latest.weight_kg - first.weight_kg) : null
+  const waistDiff = (latest.waist_cm && first.waist_cm) ? (latest.waist_cm - first.waist_cm) : null
+  const fatDiff = (latest.body_fat_pct && first.body_fat_pct) ? (latest.body_fat_pct - first.body_fat_pct) : null
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        <ProgressStat label="Gewicht" value={weightDiff} unit="kg" invert />
+        <ProgressStat label="Taille" value={waistDiff} unit="cm" invert />
+        <ProgressStat label="Vetmassa" value={fatDiff} unit="%" invert />
+      </div>
+
+      {sorted.length > 1 && (
+        <div className="h-32 w-full mt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={sorted}>
+              <Line 
+                type="monotone" 
+                dataKey="weight_kg" 
+                stroke="#620E06" 
+                strokeWidth={2} 
+                dot={false} 
+              />
+              <Tooltip 
+                contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', fontSize: '10px' }}
+                labelFormatter={(v) => format(new Date(v), 'dd MMM')}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between pt-2">
+        <span className="text-xs text-zinc-500">{measurements.length} metingen totaal</span>
+        <Link href={`/measurements?clientName=${encodeURIComponent(clientName)}`} className="text-xs text-brand-burgundy hover:underline flex items-center gap-1">
+          Alle metingen <ArrowRight className="w-3 h-3" />
+        </Link>
+      </div>
+    </div>
+  )
 }
 
 export default function ClientDetailPage({ params }: { params: { id: string } }) {
@@ -445,10 +544,16 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
             </div>
           )}
         </div>
-      </div>
 
-      {/* Checklist section */}
-      <div className="mt-8 mb-8">
+        {/* Progress & Transformation */}
+        <div className="card">
+          <h2 className="font-semibold text-white mb-4 flex items-center gap-2">
+            <Ruler className="w-4 h-4 text-brand-burgundy" /> Progress & Transformatie
+          </h2>
+          <MeasurementsSection clientName={client.name} />
+        </div>
+
+        {/* Checklist section */}
         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-white flex items-center gap-2">

@@ -682,8 +682,8 @@ export default function ContentPage() {
     published: posts.filter((p) => p.status === 'published').length,
   }
 
-  const rangeStart = viewMode === 'week' ? weekStart : monthStart
-  const rangeEnd = viewMode === 'week' ? weekEnd : monthEnd
+  const rangeStart = viewModeType === 'week' ? weekStart : monthStart
+  const rangeEnd = viewModeType === 'week' ? weekEnd : monthEnd
   const mobileScheduledPosts = posts
     .filter((p) => {
       if (!p.scheduled_date) return false
@@ -707,7 +707,7 @@ export default function ContentPage() {
             Content Planner
           </h1>
           <p className="text-zinc-400 text-sm mt-1">
-            {viewMode === 'week'
+            {viewModeType === 'week'
               ? `${format(weekStart, 'MMM d')} — ${format(weekEnd, 'MMM d, yyyy')}`
               : format(monthDate, 'MMMM yyyy')}
           </p>

@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic'
-import { NextResponse , NextRequest } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { formatSupabaseError, isMissingTableError } from '@/lib/supabase-error'
@@ -16,6 +16,22 @@ export async function GET(request: NextRequest) {
     ).toISOString().split('T')[0]
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
+    const responses = await Promise.all([
+      supabaseAdmin.from('sales').select('amount').gte('date', thisMonthStart),
+      supabaseAdmin.from('clients').select('*', { count: 'exact', head: true }).in('status', ['client', 'prospect', 'team_member']),
+      supabaseAdmin.from('clients').select('*').lte('next_follow_up', today).neq('status', 'inactive').order('next_follow_up'),
+      supabaseAdmin.from('clients').select('*', { count: 'exact', head: true }).eq('status', 'lead').gte('created_at', weekAgo),
+      supabaseAdmin.from('goals').select('*').eq('completed', false).order('deadline'),
+      supabaseAdmin.from('habits').select('*').eq('active', true),
+      supabaseAdmin.from('habit_logs').select('*').eq('date', today),
+      supabaseAdmin.from('sales').select('*').order('created_at', { ascending: false }).limit(5),
+      supabaseAdmin.from('clients').select('*').order('created_at', { ascending: false }).limit(5),
+      supabaseAdmin.from('dashboard_settings').select('value').eq('key', 'revenue_target').maybeSingle(),
+      supabaseAdmin.from('tasks').select('*', { count: 'exact', head: true }),
+      supabaseAdmin.from('team_activity').select('*').order('created_at', { ascending: false }).limit(10),
+      supabaseAdmin.from('health_metrics').select('*').order('date', { ascending: false }).limit(1).maybeSingle(),
+    ])
+
     const [
       salesThisMonthRes,
       activeClientsRes,
@@ -29,20 +45,8 @@ export async function GET(request: NextRequest) {
       revenueTargetRes,
       tasksCountRes,
       teamActivityRes,
-    ] = await Promise.all([
-      supabaseAdmin.from('sales').select('amount').gte('date', thisMonthStart),
-      supabaseAdmin.from('clients').select('*', { count: 'exact', head: true }).in('status', ['client', 'prospect', 'team_member']),
-      supabaseAdmin.from('clients').select('*').lte('next_follow_up', today).neq('status', 'inactive').order('next_follow_up'),
-      supabaseAdmin.from('clients').select('*', { count: 'exact', head: true }).eq('status', 'lead').gte('created_at', weekAgo),
-      supabaseAdmin.from('goals').select('*').eq('completed', false).order('deadline'),
-      supabaseAdmin.from('habits').select('*').eq('active', true),
-      supabaseAdmin.from('habit_logs').select('*').eq('date', today),
-      supabaseAdmin.from('sales').select('*').order('created_at', { ascending: false }).limit(5),
-      supabaseAdmin.from('clients').select('*').order('created_at', { ascending: false }).limit(5),
-      supabaseAdmin.from('dashboard_settings').select('value').eq('key', 'revenue_target').maybeSingle(),
-      supabaseAdmin.from('tasks').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('team_activity').select('*').order('created_at', { ascending: false }).limit(10),
-    ])
+      healthRes,
+    ] = responses
 
     const warnings: string[] = []
 
@@ -94,6 +98,10 @@ export async function GET(request: NextRequest) {
       ? (isMissingTableError(teamActivityRes.error) ? [] : (warnings.push(`team_activity: ${formatSupabaseError(teamActivityRes.error)}`), []))
       : (teamActivityRes.data || [])
 
+    const latestHealth = healthRes.error
+      ? (isMissingTableError(healthRes.error) ? null : (warnings.push(`health_metrics: ${formatSupabaseError(healthRes.error)}`), null))
+      : (healthRes.data || null)
+
     const revenue = salesThisMonth.reduce((sum, s: any) => sum + Number(s.amount), 0) || 0
 
     const habitsWithStatus = habits.map((h: any) => ({
@@ -115,6 +123,7 @@ export async function GET(request: NextRequest) {
       recent_clients: recentClients || [],
       tasks_count: tasksCount,
       recent_team_activity: recentTeamActivity,
+      latest_health: latestHealth,
       warnings: warnings.length ? warnings : undefined,
     })
   } catch (error) {

@@ -109,7 +109,7 @@ export const teamActivitySchema = z.object({
   agent_name: z.string().trim().min(1).max(100),
   action_type: z.string().trim().min(1).max(100),
   description: optionalStr(1000),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 })
 
 // ─── Client Interactions ────────────────────────────────────────────────────
