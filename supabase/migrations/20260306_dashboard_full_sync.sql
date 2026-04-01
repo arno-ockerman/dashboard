@@ -156,6 +156,7 @@ CREATE TABLE IF NOT EXISTS bi_recommendations (
 
 CREATE INDEX IF NOT EXISTS bi_recommendations_digest_idx ON bi_recommendations(digest_id);
 
+<<<<<<< HEAD
 -- Seed: Initial BI digest for today
 INSERT INTO bi_digests (digest_date, summary, ranked_recommendations, expert_count, status)
 VALUES (
@@ -167,6 +168,19 @@ VALUES (
     {"rank": 3, "title": "Challenge week 2 content schedulen op 10 maart", "domain": "Marketing", "impact": "high", "effort": "low"},
     {"rank": 4, "title": "Herbalife team: 2 nieuwe prospects aanspreken per dag", "domain": "Sales", "impact": "high", "effort": "medium"},
     {"rank": 5, "title": "Macro calculator live — SEO lead gen activeren", "domain": "Growth", "impact": "medium", "effort": "low"}
+=======
+-- Seed BI digest voor vandaag
+INSERT INTO bi_digests (digest_date, summary, ranked_recommendations, expert_count, status)
+VALUES (
+  '2026-03-06',
+  'Dashboard is vandaag de focus. 5 experts analyseerden de business: income groei naar €10K/maand vraagt 3 parallelle sporen — Club App lancering, MakeItHappen challenge schalen, Herbalife team opbouwen. Kritieke bottleneck: Supabase migrations nog niet uitgevoerd waardoor tools niet functioneren.',
+  '[
+    {"rank":1,"title":"Run alle Supabase migrations","domain":"Tech","impact":"high","effort":"low"},
+    {"rank":2,"title":"Club App TestFlight submission deze week","domain":"Product","impact":"high","effort":"medium"},
+    {"rank":3,"title":"Challenge week 2 content schedulen op 10 maart","domain":"Marketing","impact":"high","effort":"low"},
+    {"rank":4,"title":"Herbalife team: 2 nieuwe prospects per dag","domain":"Sales","impact":"high","effort":"medium"},
+    {"rank":5,"title":"Macro calculator live — SEO lead gen activeren","domain":"Growth","impact":"medium","effort":"low"}
+>>>>>>> feature/mobile-ui-overhaul
   ]'::jsonb,
   5,
   'generated'
@@ -213,7 +227,7 @@ BEGIN
   VALUES
     (v_digest_id, 1, 'Run alle Supabase migrations (7 scripts)', 'Club App migrations + health_metrics. Blokkeert App Store submission + health tracking.', 'Marcus Rodriguez', 'Tech', 'high', 'low', 'proposed'),
     (v_digest_id, 2, 'Club App TestFlight submission', 'PR #13 gemerged. EAS build aanmaken. Vereist: migrations gedraaid, Arno heeft Apple Developer account.', 'Marcus Rodriguez', 'Product', 'high', 'medium', 'proposed'),
-    (v_digest_id, 3, 'Challenge week 2 content live zetten', 'Dag 8-14 content schedulen voor 10-16 maart. Brief is klaar.', 'Emma Thompson', 'Marketing', 'high', 'low', 'proposed'),
+    (v_digest_id, 3, 'Challenge week 2 content live zetten', 'Dag 8-14 content schedulen for 10-16 maart. Brief is klaar.', 'Emma Thompson', 'Marketing', 'high', 'low', 'proposed'),
     (v_digest_id, 4, 'Herbalife team: 2 prospects per dag', 'Voor income target: 3 actieve coaches geeft +€1.500/maand. Start met dagelijkse outreach.', 'Emma Thompson', 'Sales', 'high', 'medium', 'proposed'),
     (v_digest_id, 5, 'Dashboard fixes deployen', 'Files pagina, Task board, Content planner, BI Council — allemaal via Mike gefixed vandaag.', 'Alex Kim', 'Tech', 'medium', 'low', 'proposed');
 END $$;
