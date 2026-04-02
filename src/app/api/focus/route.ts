@@ -58,48 +58,59 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ focus: data })
 }
 
-// POST /api/focus  — upsert today's focus data
+// POST /api/focus — upsert today's focus data
 export async function POST(req: NextRequest) {
   const auth = await withAuth(req)
   if (!auth.authorized) return auth.response!
-  const body = await req.json()
-  const {
-    date,
-    task_1, task_1_done,
-    task_2, task_2_done,
-    task_3, task_3_done,
-    reflection,
-    energy_level,
-    focus_score,
-    pomodoros_completed,
-  } = body
 
-  const focusDate = date || format(new Date(), 'yyyy-MM-dd')
+  try {
+    const json = await req.json()
+    const parsed = dailyFocusSchema.safeParse(json)
 
-  const { data, error } = await supabaseAdmin
-    .from('daily_focus')
-    .upsert(
-      {
-        user_id: 'arno',
-        date: focusDate,
-        task_1: task_1 ?? null,
-        task_1_done: task_1_done ?? false,
-        task_2: task_2 ?? null,
-        task_2_done: task_2_done ?? false,
-        task_3: task_3 ?? null,
-        task_3_done: task_3_done ?? false,
-        reflection: reflection ?? null,
-        energy_level: energy_level ?? null,
-        focus_score: focus_score ?? null,
-        pomodoros_completed: pomodoros_completed ?? 0,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id,date' }
-    )
-    .select()
-    .single()
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
+    }
 
-  if (error) return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    const {
+      date,
+      task_1, task_1_done,
+      task_2, task_2_done,
+      task_3, task_3_done,
+      reflection,
+      energy_level,
+      focus_score,
+      pomodoros_completed,
+    } = parsed.data
 
-  return NextResponse.json({ focus: data })
+    const focusDate = date || format(new Date(), 'yyyy-MM-dd')
+
+    const { data, error } = await supabaseAdmin
+      .from('daily_focus')
+      .upsert(
+        {
+          user_id: 'arno',
+          date: focusDate,
+          task_1: task_1 ?? null,
+          task_1_done: task_1_done ?? false,
+          task_2: task_2 ?? null,
+          task_2_done: task_2_done ?? false,
+          task_3: task_3 ?? null,
+          task_3_done: task_3_done ?? false,
+          reflection: reflection ?? null,
+          energy_level: energy_level ?? null,
+          focus_score: focus_score ?? null,
+          pomodoros_completed: pomodoros_completed ?? 0,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,date' }
+      )
+      .select()
+      .single()
+
+    if (error) throw error
+    return NextResponse.json({ focus: data })
+  } catch (err) {
+    console.error('[focus POST]', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

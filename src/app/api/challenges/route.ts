@@ -1,8 +1,13 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { challengeSchema } from '@/lib/validators'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
+
   try {
     const { data, error } = await supabaseAdmin
       .from('challenge_overview')
@@ -16,16 +21,21 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json()
-    const { name, description, type = '21day', start_date, color = '#10b981' } = body
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
 
-    if (!name || !start_date) {
-      return NextResponse.json({ error: 'name and start_date are required' }, { status: 400 })
+  try {
+    const json = await req.json()
+    const parsed = challengeSchema.safeParse(json)
+
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
     }
 
+    const { name, description, type = '21day', start_date, color = '#10b981', target_count } = parsed.data
+
     // Calculate end date based on type
-    const days = type === '28day' ? 28 : type === 'custom' ? (body.target_count ?? 21) : 21
+    const days = type === '28day' ? 28 : type === 'custom' ? (target_count ?? 21) : 21
     const startD = new Date(start_date)
     const endD = new Date(startD)
     endD.setDate(endD.getDate() + days - 1)

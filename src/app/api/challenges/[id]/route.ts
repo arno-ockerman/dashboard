@@ -1,8 +1,13 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { challengeUpdateSchema } from '@/lib/validators'
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
+
   try {
     const { data, error } = await supabaseAdmin
       .from('challenge_overview')
@@ -17,11 +22,20 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
+
   try {
-    const body = await req.json()
+    const json = await req.json()
+    const parsed = challengeUpdateSchema.safeParse(json)
+
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
+    }
+
     const { data, error } = await supabaseAdmin
       .from('challenges')
-      .update(body)
+      .update(parsed.data)
       .eq('id', params.id)
       .select()
       .single()
@@ -32,7 +46,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
+
   try {
     const { error } = await supabaseAdmin
       .from('challenges')

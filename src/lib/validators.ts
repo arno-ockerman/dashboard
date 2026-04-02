@@ -123,12 +123,16 @@ export const clientInteractionSchema = z.object({
 // ─── Sales ──────────────────────────────────────────────────────────────────
 
 export const saleSchema = z.object({
-  client_id: z.string().uuid().optional(),
-  amount: z.number().min(0),
-  description: optionalStr(500),
-  date: z.string().trim().optional(),
-  category: optionalStr(100),
+  client_id: z.string().uuid().optional().nullable(),
+  client_name: optionalStr(200).nullable(),
+  product_category: z.enum(['shakes', 'supplements', 'tea', 'aloe', 'skin', 'challenge', 'other']).optional(),
+  product_name: optionalStr(200).nullable(),
+  amount: z.number().min(0.01),
+  date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  notes: optionalStr(2000).nullable(),
 }).passthrough()
+
+export const saleUpdateSchema = saleSchema.partial()
 
 // ─── Notifications ───────────────────────────────────────────────────────────
 
@@ -156,6 +160,22 @@ export const focusSchema = z.object({
   notes: optionalStr(2000),
 }).passthrough()
 
+// ─── Daily Focus ────────────────────────────────────────────────────────────
+
+export const dailyFocusSchema = z.object({
+  date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  task_1: optionalStr(500).nullable(),
+  task_1_done: z.boolean().optional(),
+  task_2: optionalStr(500).nullable(),
+  task_2_done: z.boolean().optional(),
+  task_3: optionalStr(500).nullable(),
+  task_3_done: z.boolean().optional(),
+  reflection: optionalStr(5000).nullable(),
+  energy_level: z.number().min(1).max(5).optional().nullable(),
+  focus_score: z.number().min(1).max(5).optional().nullable(),
+  pomodoros_completed: z.number().min(0).optional(),
+}).passthrough()
+
 // ─── Client Checklists ───────────────────────────────────────────────────────
 
 export const clientChecklistSchema = z.object({
@@ -165,3 +185,58 @@ export const clientChecklistSchema = z.object({
 }).passthrough()
 
 export const clientChecklistUpdateSchema = clientChecklistSchema.partial()
+
+// ─── Measurements ───────────────────────────────────────────────────────────
+
+export const measurementSchema = z.object({
+  client_name: trimmedStr(200),
+  client_id: z.string().uuid().optional().nullable(),
+  date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be YYYY-MM-DD'),
+  weight_kg: z.number().min(0).max(500).optional().nullable(),
+  body_fat_pct: z.number().min(0).max(100).optional().nullable(),
+  waist_cm: z.number().min(0).max(300).optional().nullable(),
+  hip_cm: z.number().min(0).max(300).optional().nullable(),
+  chest_cm: z.number().min(0).max(300).optional().nullable(),
+  notes: optionalStr(2000).nullable(),
+}).passthrough()
+
+export const measurementUpdateSchema = measurementSchema.partial()
+
+// ─── Challenges ─────────────────────────────────────────────────────────────
+
+export const challengeSchema = z.object({
+  name: trimmedStr(300),
+  description: optionalStr(2000),
+  type: z.enum(['21day', '28day', 'custom']).optional(),
+  start_date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/),
+  end_date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  color: z.string().trim().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional(),
+  target_count: z.number().min(1).max(365).optional(),
+}).passthrough()
+
+export const challengeUpdateSchema = challengeSchema.partial()
+
+export const challengeParticipantSchema = z.object({
+  challenge_id: z.string().uuid().optional(),
+  client_id: z.string().uuid().optional().nullable(),
+  name: trimmedStr(200),
+  telegram: optionalStr(100).nullable(),
+  enrolled_at: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  current_day: z.number().min(1).max(365).optional(),
+  status: z.enum(['active', 'completed', 'dropped']).optional(),
+}).passthrough()
+
+export const challengeParticipantUpdateSchema = challengeParticipantSchema.partial()
+
+// ─── Training Logs ──────────────────────────────────────────────────────────
+
+export const trainingLogSchema = z.object({
+  date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  workout_type: trimmedStr(200),
+  duration_min: z.number().min(0).max(1440).optional().nullable(),
+  energy_level: z.number().min(0).max(10).optional().nullable(),
+  exercises: z.array(z.record(z.string(), z.unknown())).optional(),
+  notes: optionalStr(2000).nullable(),
+}).passthrough()
+
+export const trainingLogUpdateSchema = trainingLogSchema.partial()

@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { measurementUpdateSchema } from '@/lib/validators'
 
 // DELETE /api/measurements/[id]
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
+
   const { id } = params
 
   if (!id) {
@@ -26,47 +31,42 @@ export async function DELETE(
 }
 
 // PATCH /api/measurements/[id]
-// Body: partial measurement fields to update
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = await withAuth(req)
+  if (!auth.authorized) return auth.response!
+
   const { id } = params
 
   if (!id) {
     return NextResponse.json({ error: 'id is required' }, { status: 400 })
   }
 
-  let body: Record<string, unknown>
-
   try {
-    body = await req.json()
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
-  }
+    const json = await req.json()
+    const parsed = measurementUpdateSchema.safeParse(json)
 
-  // Whitelist updatable fields
-  const allowed = ['date', 'weight_kg', 'body_fat_pct', 'waist_cm', 'hip_cm', 'chest_cm', 'notes']
-  const patch: Record<string, unknown> = {}
-  for (const key of allowed) {
-    if (key in body) patch[key] = body[key] ?? null
-  }
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
+    }
 
-  if (Object.keys(patch).length === 0) {
-    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
-  }
+    if (Object.keys(parsed.data).length === 0) {
+      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+    }
 
-  const { data, error } = await supabaseAdmin
-    .from('measurements')
-    .update(patch)
-    .eq('id', id)
-    .select()
-    .single()
+    const { data, error } = await supabaseAdmin
+      .from('measurements')
+      .update(parsed.data)
+      .eq('id', id)
+      .select()
+      .single()
 
-  if (error) {
-    console.error('[measurements PATCH]', error)
+    if (error) throw error
+    return NextResponse.json({ measurement: data })
+  } catch (err) {
+    console.error('[measurements PATCH]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  return NextResponse.json({ measurement: data })
 }

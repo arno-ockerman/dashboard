@@ -1,7 +1,7 @@
-export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { trainingLogSchema } from '@/lib/validators'
 import { format, subDays } from 'date-fns'
 
 // GET /api/training?days=30 — fetch training logs
@@ -44,30 +44,27 @@ export async function POST(req: NextRequest) {
   const auth = await withAuth(req)
   if (!auth.authorized) return auth.response!
 
-  const body = await req.json()
-  const { date, workout_type, duration_min, energy_level, exercises, notes } = body
+  try {
+    const json = await req.json()
+    const parsed = trainingLogSchema.safeParse(json)
 
-  if (!workout_type) {
-    return NextResponse.json({ error: 'workout_type is required' }, { status: 400 })
-  }
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
+    }
 
-  const { data, error } = await supabaseAdmin
-    .from('training_logs')
-    .insert({
-      date: date || format(new Date(), 'yyyy-MM-dd'),
-      workout_type,
-      duration_min: duration_min || null,
-      energy_level: energy_level || null,
-      exercises: exercises || [],
-      notes: notes || null,
-    })
-    .select()
-    .single()
+    const { data, error } = await supabaseAdmin
+      .from('training_logs')
+      .insert({
+        ...parsed.data,
+        date: parsed.data.date || format(new Date(), 'yyyy-MM-dd'),
+      })
+      .select()
+      .single()
 
-  if (error) {
-    console.error('training POST error:', error)
+    if (error) throw error
+    return NextResponse.json({ log: data }, { status: 201 })
+  } catch (err) {
+    console.error('training POST error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  return NextResponse.json({ log: data }, { status: 201 })
 }
