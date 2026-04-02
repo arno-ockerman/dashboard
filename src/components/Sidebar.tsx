@@ -59,6 +59,7 @@ const NAV_SECTIONS = [
       { href: '/sales', label: 'Sales', icon: DollarSign },
       { href: '/usage', label: 'Usage', icon: BarChart2 },
       { href: '/clients', label: 'Clients', icon: Users },
+      { href: '/pipeline', label: 'Pipeline', icon: TrendingUp },
       { href: '/challenges', label: '21-Day Challenges', icon: Flame },
       { href: '/measurements', label: 'Metingen', icon: Ruler },
       { href: '/content', label: 'Content', icon: Calendar },
