@@ -21,15 +21,32 @@ interface FocusData {
   task_3_done: boolean
 }
 
+interface FocusStats {
+  completion_rate: number
+  avg_energy: number
+  streak: number
+}
+
 function Big3Widget() {
   const [focus, setFocus] = useState<FocusData | null>(null)
+  const [stats, setStats] = useState<FocusStats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const today = format(new Date(), 'yyyy-MM-dd')
-    fetch(`/api/focus?date=${today}`)
-      .then((r) => r.json())
-      .then((d) => setFocus(d.focus || null))
+    Promise.all([
+      fetch(`/api/focus?date=${today}`).then(r => r.json()),
+      fetch(`/api/focus?history=7`).then(r => r.json())
+    ])
+      .then(([focusData, historyData]) => {
+        setFocus(focusData.focus || null)
+        if (historyData.stats) {
+          setStats({
+            ...historyData.stats,
+            streak: historyData.streak
+          })
+        }
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -67,29 +84,48 @@ function Big3Widget() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-2">
-          {tasks.map((t, i) => (
-            <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
-              {t.done ? (
-                <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
-              ) : (
-                <Circle className="w-5 h-5 text-zinc-600 flex-shrink-0" />
-              )}
-              <span className={`text-sm flex-1 ${t.done ? 'text-zinc-500 line-through' : 'text-white'}`}>
-                {t.text}
-              </span>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            {tasks.map((t, i) => (
+              <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-zinc-800/30">
+                {t.done ? (
+                  <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
+                ) : (
+                  <Circle className="w-5 h-5 text-zinc-600 flex-shrink-0" />
+                )}
+                <span className={`text-sm flex-1 ${t.done ? 'text-zinc-500 line-through' : 'text-white'}`}>
+                  {t.text}
+                </span>
+              </div>
+            ))}
+            <div className="mt-3 pt-3">
+              <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-brand-burgundy rounded-full transition-all duration-500"
+                  style={{ width: `${tasks.length ? (tasks.filter((t) => t.done).length / tasks.length) * 100 : 0}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider">
+                Progress: {tasks.filter((t) => t.done).length}/{tasks.length} tasks
+              </p>
             </div>
-          ))}
-          <div className="mt-3 pt-3 border-t border-zinc-800">
-            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-brand-burgundy rounded-full transition-all duration-500"
-                style={{ width: `${tasks.length ? (tasks.filter((t) => t.done).length / tasks.length) * 100 : 0}%` }}
-              />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-zinc-800/40 p-3 rounded-xl border border-zinc-800/50 flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <Flame className="w-3.5 h-3.5 text-orange-400" />
+                <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Streak</span>
+              </div>
+              <p className="text-2xl font-bold text-white">{stats?.streak || 0}<span className="text-xs font-normal text-zinc-500 ml-1">days</span></p>
             </div>
-            <p className="text-xs text-zinc-500 mt-1">
-              {tasks.filter((t) => t.done).length}/{tasks.length} completed
-            </p>
+            <div className="bg-zinc-800/40 p-3 rounded-xl border border-zinc-800/50 flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <Target className="w-3.5 h-3.5 text-brand-burgundy" />
+                <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Weekly</span>
+              </div>
+              <p className="text-2xl font-bold text-white">{Math.round(stats?.completion_rate || 0)}<span className="text-xs font-normal text-zinc-500 ml-1">%</span></p>
+            </div>
           </div>
         </div>
       )}
