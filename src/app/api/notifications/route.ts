@@ -15,6 +15,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
   const onlyUnread = searchParams.get('unread') === 'true'
   const typeFilter = searchParams.get('type') as NotificationType | null
+  const sourceFilter = searchParams.get('source')?.trim()
+  const searchQuery = searchParams.get('q')?.trim()
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '50', 10), 200)
 
   let query = supabaseAdmin
@@ -31,6 +33,17 @@ export async function GET(req: NextRequest) {
     query = query.eq('type', typeFilter)
   }
 
+  if (sourceFilter) {
+    query = query.eq('source', sourceFilter)
+  }
+
+  if (searchQuery) {
+    const escapedQuery = searchQuery.replace(/[%,]/g, '').trim()
+    if (escapedQuery) {
+      query = query.or(`title.ilike.%${escapedQuery}%,message.ilike.%${escapedQuery}%,source.ilike.%${escapedQuery}%`)
+    }
+  }
+
   const { data, error } = await query
 
   if (error) {
@@ -43,9 +56,20 @@ export async function GET(req: NextRequest) {
     .select('id', { count: 'exact', head: true })
     .eq('read', false)
 
+  const { data: sourceRows } = await supabaseAdmin
+    .from('notifications')
+    .select('source')
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  const availableSources = Array.from(
+    new Set((sourceRows ?? []).map((row) => row.source).filter(Boolean))
+  )
+
   return NextResponse.json({
     notifications: (data ?? []) as Notification[],
     unreadCount: unreadCount ?? 0,
+    availableSources,
   })
 }
 

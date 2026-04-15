@@ -7,6 +7,7 @@ import {
   AlertCircle,
   AlertTriangle,
   Info,
+  Search,
   RefreshCw,
   CheckCheck,
   ExternalLink,
@@ -207,11 +208,15 @@ function EmptyState({ tab }: { tab: FilterTab }) {
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [availableSources, setAvailableSources] = useState<string[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [activeTab, setActiveTab] = useState<FilterTab>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sourceFilter, setSourceFilter] = useState('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [markingAllRead, setMarkingAllRead] = useState(false)
+  const [clearingRead, setClearingRead] = useState(false)
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date())
 
   // ── Fetch ────────────────────────────────────────────────────────────────
@@ -225,13 +230,22 @@ export default function NotificationsPage() {
       params.set('type', tab)
     }
 
+    const trimmedQuery = searchQuery.trim()
+    if (trimmedQuery) {
+      params.set('q', trimmedQuery)
+    }
+
+    if (sourceFilter !== 'all') {
+      params.set('source', sourceFilter)
+    }
+
     const res = await fetch(`/api/notifications?${params}`)
     if (!res.ok) {
       const body = await res.json().catch(() => ({})) as { error?: string }
       throw new Error(body.error ?? `HTTP ${res.status}`)
     }
-    return res.json() as Promise<{ notifications: Notification[]; unreadCount: number }>
-  }, [activeTab])
+    return res.json() as Promise<{ notifications: Notification[]; unreadCount: number; availableSources?: string[] }>
+  }, [activeTab, searchQuery, sourceFilter])
 
   const load = useCallback(async (showSpinner = false) => {
     if (showSpinner) setLoading(true)
@@ -239,6 +253,7 @@ export default function NotificationsPage() {
       const data = await fetchNotifications(activeTab)
       setNotifications(data.notifications)
       setUnreadCount(data.unreadCount)
+      setAvailableSources(data.availableSources ?? [])
       setLastRefreshed(new Date())
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load notifications')
@@ -250,9 +265,12 @@ export default function NotificationsPage() {
   // Initial load + tab changes
   useEffect(() => {
     setLoading(true)
-    load(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab])
+    const timeout = window.setTimeout(() => {
+      load(true)
+    }, searchQuery.trim() ? 200 : 0)
+
+    return () => window.clearTimeout(timeout)
+  }, [activeTab, searchQuery, sourceFilter, load])
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
@@ -308,6 +326,30 @@ export default function NotificationsPage() {
     setMarkingAllRead(false)
   }, [unreadCount, markingAllRead, load])
 
+  const clearRead = useCallback(async () => {
+    if (clearingRead) return
+
+    const readCount = notifications.filter((notification) => notification.read).length
+    if (readCount === 0) return
+
+    const confirmed = window.confirm(`Delete ${readCount} read notification${readCount === 1 ? '' : 's'}? This cannot be undone.`)
+    if (!confirmed) return
+
+    setClearingRead(true)
+    try {
+      const response = await fetch('/api/notifications/clear-read', { method: 'POST' })
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({})) as { error?: string }
+        throw new Error(body.error ?? 'Failed to clear read notifications')
+      }
+      await load(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to clear read notifications')
+    } finally {
+      setClearingRead(false)
+    }
+  }, [clearingRead, notifications, load])
+
   // ── Tab counts ───────────────────────────────────────────────────────────
 
   const countsByType = notifications.reduce<Record<string, number>>((acc, n) => {
@@ -326,6 +368,8 @@ export default function NotificationsPage() {
     warning: activeTab === 'warning' ? notifications.length : (countsByType.warning ?? 0),
     info:    activeTab === 'info'    ? notifications.length : (countsByType.info    ?? 0),
   }
+
+  const readCount = notifications.filter((notification) => notification.read).length
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -377,6 +421,20 @@ export default function NotificationsPage() {
               </span>
             </button>
           )}
+
+          {readCount > 0 && (
+            <button
+              onClick={clearRead}
+              disabled={clearingRead}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white text-sm transition-all disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{clearingRead ? 'Clearing...' : 'Clear read'}</span>
+              <span className="bg-zinc-800 text-zinc-300 text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                {readCount}
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -416,6 +474,31 @@ export default function NotificationsPage() {
             </button>
           )
         })}
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr),220px]">
+        <label className="relative block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search title, message or source..."
+            className="input pl-9"
+          />
+        </label>
+
+        <select
+          value={sourceFilter}
+          onChange={(e) => setSourceFilter(e.target.value)}
+          className="select"
+          aria-label="Filter notifications by source"
+        >
+          <option value="all">All sources</option>
+          {availableSources.map((source) => (
+            <option key={source} value={source}>{formatSource(source)}</option>
+          ))}
+        </select>
       </div>
 
       {/* Error banner */}
