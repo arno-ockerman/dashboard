@@ -13,15 +13,23 @@ export async function GET(req: NextRequest) {
     const assignedTo = searchParams.get('assigned_to')
     const priority = searchParams.get('priority')
     const project = searchParams.get('project')
+    const status = searchParams.get('status')
+    const queryText = searchParams.get('q')?.trim()
 
     let query = supabaseAdmin
       .from('tasks')
       .select('*')
+      .order('updated_at', { ascending: false })
       .order('created_at', { ascending: false })
 
     if (assignedTo) query = query.eq('assigned_to', assignedTo)
     if (priority) query = query.eq('priority', priority)
     if (project) query = query.eq('project', project)
+    if (status) query = query.eq('status', status)
+    if (queryText) {
+      const escaped = queryText.replace(/[%_,]/g, (char) => `\\${char}`)
+      query = query.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`)
+    }
 
     const { data, error } = await query
 

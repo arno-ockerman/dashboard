@@ -1,14 +1,12 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import {
   ListTodo, Loader2, CheckCircle2, Plus, X, RefreshCw,
-  ArrowRight, Filter, Trash2, ChevronRight,
+  ArrowRight, Filter, Trash2, ChevronRight, Search,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import type { Task, TaskStatus, TaskPriority } from '@/types'
-
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 const AGENTS = ['Jarvis', 'Mike', 'Max', 'Kate', 'Lisa', 'Alex', 'Steve', 'Sam']
 
@@ -34,8 +32,6 @@ const COLUMNS: { id: TaskStatus; label: string; icon: React.ElementType; color: 
   { id: 'in_progress', label: 'In Progress', icon: Loader2, color: 'text-brand-amber' },
   { id: 'done', label: 'Done', icon: CheckCircle2, color: 'text-brand-green' },
 ]
-
-// ─── Add Task Modal ───────────────────────────────────────────────────────────
 
 interface AddTaskModalProps {
   defaultStatus?: TaskStatus
@@ -190,8 +186,6 @@ function AddTaskModal({ defaultStatus = 'todo', onClose, onSuccess }: AddTaskMod
   )
 }
 
-// ─── Task Card ────────────────────────────────────────────────────────────────
-
 interface TaskCardProps {
   task: Task
   onStatusChange: (id: string, status: TaskStatus) => void
@@ -262,8 +256,6 @@ function TaskCard({ task, onStatusChange, onDelete }: TaskCardProps) {
   )
 }
 
-// ─── Kanban Column ────────────────────────────────────────────────────────────
-
 interface KanbanColumnProps {
   column: typeof COLUMNS[0]
   tasks: Task[]
@@ -277,7 +269,6 @@ function KanbanColumn({ column, tasks, onStatusChange, onDelete, onAdd }: Kanban
 
   return (
     <div className="flex flex-col bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-      {/* Column header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
         <div className="flex items-center gap-2">
           <Icon className={`w-4 h-4 ${column.color}`} />
@@ -295,7 +286,6 @@ function KanbanColumn({ column, tasks, onStatusChange, onDelete, onAdd }: Kanban
         </button>
       </div>
 
-      {/* Tasks */}
       <div className="flex-1 p-3 space-y-3 min-h-48 overflow-y-auto">
         {tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -314,7 +304,6 @@ function KanbanColumn({ column, tasks, onStatusChange, onDelete, onAdd }: Kanban
         )}
       </div>
 
-      {/* Add button */}
       <button
         onClick={() => onAdd(column.id)}
         className="flex items-center gap-2 px-4 py-3 text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800/50 transition-all text-xs border-t border-zinc-800"
@@ -326,14 +315,14 @@ function KanbanColumn({ column, tasks, onStatusChange, onDelete, onAdd }: Kanban
   )
 }
 
-// ─── Main Tasks Page ──────────────────────────────────────────────────────────
-
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [addModal, setAddModal] = useState<TaskStatus | null>(null)
-  const [filterAgent, setFilterAgent] = useState<string>('')
-  const [filterPriority, setFilterPriority] = useState<string>('')
+  const [filterAgent, setFilterAgent] = useState('')
+  const [filterPriority, setFilterPriority] = useState('')
+  const [filterProject, setFilterProject] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
 
   const fetchTasks = useCallback(async () => {
@@ -342,7 +331,9 @@ export default function TasksPage() {
       const params = new URLSearchParams()
       if (filterAgent) params.set('assigned_to', filterAgent)
       if (filterPriority) params.set('priority', filterPriority)
-      const res = await fetch(`/api/tasks?${params}`)
+      if (filterProject) params.set('project', filterProject)
+      if (searchQuery.trim()) params.set('q', searchQuery.trim())
+      const res = await fetch(`/api/tasks?${params.toString()}`)
       const data = await res.json()
       setTasks(data.tasks || [])
     } catch (err) {
@@ -350,11 +341,15 @@ export default function TasksPage() {
     } finally {
       setLoading(false)
     }
-  }, [filterAgent, filterPriority])
+  }, [filterAgent, filterPriority, filterProject, searchQuery])
 
   useEffect(() => {
-    fetchTasks()
-  }, [fetchTasks])
+    const timeout = window.setTimeout(() => {
+      fetchTasks()
+    }, searchQuery.trim() ? 200 : 0)
+
+    return () => window.clearTimeout(timeout)
+  }, [fetchTasks, searchQuery])
 
   const handleStatusChange = async (id: string, status: TaskStatus) => {
     try {
@@ -381,6 +376,17 @@ export default function TasksPage() {
     }
   }
 
+  const projectOptions = useMemo(() => {
+    return Array.from(new Set(tasks.map((task) => task.project).filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b))
+  }, [tasks])
+
+  const statusSummary = useMemo(() => {
+    return COLUMNS.map((column) => ({
+      ...column,
+      count: tasks.filter((task) => task.status === column.id).length,
+    }))
+  }, [tasks])
+
   const getColumnTasks = (status: TaskStatus) =>
     tasks.filter((t) => t.status === status)
 
@@ -392,9 +398,10 @@ export default function TasksPage() {
     high: tasks.filter((t) => t.priority === 'high' && t.status !== 'done').length,
   }
 
+  const activeFilterCount = [filterAgent, filterPriority, filterProject, searchQuery.trim()].filter(Boolean).length
+
   return (
     <div>
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1
@@ -410,10 +417,15 @@ export default function TasksPage() {
         <div className="flex gap-3 flex-wrap">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`btn-ghost ${showFilters || filterAgent || filterPriority ? 'text-brand-amber' : ''}`}
+            className={`btn-ghost ${showFilters || activeFilterCount ? 'text-brand-amber' : ''}`}
           >
             <Filter className="w-4 h-4" />
             Filter
+            {activeFilterCount > 0 && (
+              <span className="ml-1 rounded-full bg-brand-burgundy px-1.5 py-0.5 text-[10px] text-white">
+                {activeFilterCount}
+              </span>
+            )}
           </button>
           <button onClick={fetchTasks} className="btn-ghost">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -425,7 +437,6 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Stats bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
           { label: 'Total', value: stats.total, color: 'text-zinc-400' },
@@ -440,51 +451,100 @@ export default function TasksPage() {
         ))}
       </div>
 
-      {/* Filters */}
-      {showFilters && (
-        <div className="card mb-6 flex flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-zinc-400 font-medium">Agent</label>
-            <select
-              className="select w-auto text-xs"
-              value={filterAgent}
-              onChange={(e) => setFilterAgent(e.target.value)}
-            >
-              <option value="">All</option>
-              {AGENTS.map((a) => (
-                <option key={a} value={a}>{AGENT_EMOJIS[a]} {a}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-zinc-400 font-medium">Priority</label>
-            <select
-              className="select w-auto text-xs"
-              value={filterPriority}
-              onChange={(e) => setFilterPriority(e.target.value)}
-            >
-              <option value="">All</option>
-              <option value="high">🔴 High</option>
-              <option value="medium">🟡 Medium</option>
-              <option value="low">🟢 Low</option>
-            </select>
-          </div>
-          {(filterAgent || filterPriority) && (
-            <button
-              onClick={() => { setFilterAgent(''); setFilterPriority('') }}
-              className="text-xs text-zinc-500 hover:text-white flex items-center gap-1"
-            >
-              <X className="w-3 h-3" /> Clear
-            </button>
-          )}
-          <div className="ml-auto flex items-center gap-2">
-            <ArrowRight className="w-3 h-3 text-zinc-600" />
-            <span className="text-xs text-zinc-500">{tasks.length} tasks match</span>
+      <div className="card mb-6 space-y-4">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr),auto] lg:items-center">
+          <label className="relative block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search task title or description..."
+              className="input pl-9"
+            />
+          </label>
+
+          <div className="flex flex-wrap gap-2 lg:justify-end">
+            {statusSummary.map((column) => {
+              const Icon = column.icon
+              return (
+                <button
+                  key={column.id}
+                  type="button"
+                  onClick={() => setAddModal(column.id)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-700 hover:text-white transition-colors"
+                >
+                  <Icon className={`w-3.5 h-3.5 ${column.color}`} />
+                  {column.label}
+                  <span className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-300">{column.count}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
-      )}
 
-      {/* Kanban Board */}
+        {showFilters && (
+          <div className="flex flex-wrap gap-4 border-t border-zinc-800 pt-4">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-zinc-400 font-medium">Agent</label>
+              <select
+                className="select w-auto text-xs"
+                value={filterAgent}
+                onChange={(e) => setFilterAgent(e.target.value)}
+              >
+                <option value="">All</option>
+                {AGENTS.map((a) => (
+                  <option key={a} value={a}>{AGENT_EMOJIS[a]} {a}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-zinc-400 font-medium">Priority</label>
+              <select
+                className="select w-auto text-xs"
+                value={filterPriority}
+                onChange={(e) => setFilterPriority(e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="high">🔴 High</option>
+                <option value="medium">🟡 Medium</option>
+                <option value="low">🟢 Low</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-zinc-400 font-medium">Project</label>
+              <select
+                className="select w-auto text-xs min-w-[140px]"
+                value={filterProject}
+                onChange={(e) => setFilterProject(e.target.value)}
+              >
+                <option value="">All</option>
+                {projectOptions.map((project) => (
+                  <option key={project} value={project}>{project}</option>
+                ))}
+              </select>
+            </div>
+            {activeFilterCount > 0 && (
+              <button
+                onClick={() => {
+                  setFilterAgent('')
+                  setFilterPriority('')
+                  setFilterProject('')
+                  setSearchQuery('')
+                }}
+                className="text-xs text-zinc-500 hover:text-white flex items-center gap-1"
+              >
+                <X className="w-3 h-3" /> Clear all
+              </button>
+            )}
+            <div className="ml-auto flex items-center gap-2">
+              <ArrowRight className="w-3 h-3 text-zinc-600" />
+              <span className="text-xs text-zinc-500">{tasks.length} tasks match</span>
+            </div>
+          </div>
+        )}
+      </div>
+
       {loading && tasks.length === 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
@@ -506,7 +566,6 @@ export default function TasksPage() {
         </div>
       )}
 
-      {/* Add Task Modal */}
       {addModal !== null && (
         <AddTaskModal
           defaultStatus={addModal}

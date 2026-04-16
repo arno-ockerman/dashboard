@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth-middleware'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { dailyFocusSchema } from '@/lib/validators'
 import { format, subDays } from 'date-fns'
 
 // GET /api/focus?date=YYYY-MM-DD  — fetch today's or specific day's focus
